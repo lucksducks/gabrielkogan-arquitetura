@@ -1,0 +1,660 @@
+/*
+Theme Name: Tiete178Lab Helvetica - Beige Edition
+Author: Lucas Bordin
+Version: 24.0
+Description: Layout 2/3 + 1/3, Ficha Técnica Animada Colada (0px), Logo no Rodapé, Sobre, Previews 1:1.
+*/
+
+/* ========================================================= */
+/* 0. DESIGN TOKENS (Variáveis Globais) */
+/* ========================================================= */
+:root {
+    /* Cores de Fundo */
+    --cor-bg-principal: #f5f4f0;
+    --cor-bg-escuro:    #1a1a1a;
+
+    /* Cores de Tipografia e Interface */
+    --cor-texto-forte:   #1a1a1a; /* Títulos, logo, botões ativos */
+    --cor-texto-medio:   #4a4a4a; /* Textos de parágrafos, descrição */
+    --cor-texto-mutado:  #8a8985; /* Subtítulos, rodapé */
+    --cor-texto-inativo: #b5b4af; /* Filtros inativos */
+    --cor-texto-claro:   #d3d3d3; /* Menu de projetos inativo */
+    --cor-texto-hover:   #454545; /* Hover do menu de projetos */
+    --cor-branco:        #ffffff; /* Elementos sobrepostos, setas */
+
+    /* Tipografia */
+    --fonte-primaria: '178Grotesk', Helvetica, 'Inter', Arial, sans-serif;
+
+    /* Layout Base */
+    --largura-esq: 60%;
+    --largura-dir: 40%;
+}
+
+/* 1. FONTES (@font-face) */
+@font-face {
+    font-family: '178Grotesk';
+    src: url('fonts/178-grotesk-regular.otf') format('opentype');
+    font-weight: normal; 
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: '178Grotesk';
+    src: url('fonts/178-grotesk-medium.otf') format('opentype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: '178Grotesk';
+    src: url('fonts/178-grotesk-semibold.otf') format('opentype');
+    font-weight: bold; 
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ========================================================= */
+/* 2. ESTRUTURA BASE */
+/* ========================================================= */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: var(--fonte-primaria);
+    color: var(--cor-texto-forte);
+    overflow: hidden; 
+    background-color: var(--cor-bg-principal);
+}
+
+.container-principal {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+    background-color: var(--cor-bg-principal);
+}
+
+/* 3. ÁREA DE CONTEÚDO (ESQUERDA - 2/3) */
+.area-scroll {
+    width: var(--largura-esq);
+    height: 100vh;
+    overflow-y: auto; 
+    background-color: var(--cor-bg-principal);
+    box-sizing: border-box;
+    position: relative;
+    overscroll-behavior: none; 
+    -ms-overflow-style: none; 
+    scrollbar-width: none;    
+}
+.area-scroll::-webkit-scrollbar { display: none; }
+
+/* 4. ALINHAMENTO DE HORIZONTE E HOME CENTRALIZADA */
+.home .area-scroll {
+    display: block; 
+}
+
+.wrap-projetos {
+    width: 100%;
+}
+.home .wrap-projetos {
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    min-height: 100vh;
+}
+
+.home .area-scroll article {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+.home .conteudo-projeto {
+    width: 80% !important; 
+    margin: 0 auto !important; 
+    transform: translateY(-60px);
+}
+.home .conteudo-projeto img {
+    margin: 0 auto !important; 
+}
+
+/* 5. IMAGENS SEM GAP E SEQUESTRO DE TEXTO */
+.area-scroll .entry-content, 
+.conteudo-projeto,
+.wp-block-image,
+.area-scroll figure,
+.area-scroll p {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.area-scroll img, 
+.wp-block-image img {
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.area-scroll .conteudo-projeto p:not(.wp-block-image):not(:has(img)) {
+    display: none;
+}
+
+/* 6. BARRA LATERAL FIXA (DIREITA - 1/3) */
+.barra-fixa {
+    width: var(--largura-dir);
+    height: 100vh;
+    padding: 100px 60px; 
+    background-color: var(--cor-bg-principal);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    position: relative; 
+    z-index: 10;
+}
+
+/* ========================================================= */
+/* 7. MARCA VERTICAL (LOGO COMO MARCA D'ÁGUA) */
+/* ========================================================= */
+.logo-watermark-box {
+    position: fixed; 
+    top: 30px; 
+    left: 40px; 
+    z-index: 50; 
+    width: fit-content;
+    pointer-events: auto; 
+    mix-blend-mode: difference;
+    transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.logo-watermark-box.easter-egg-ativo {
+    top: 50%;
+    left: 30%; 
+    transform: translate(-50%, -50%); 
+}
+
+.logo-watermark-box.easter-egg-ativo .img-logo-pequena {
+    max-width: 45vw; 
+}
+
+.logo-watermark-box .img-logo-pequena {
+    filter: invert(1); 
+    max-width: 13vh;
+}
+
+.logo-watermark-box .nome-principal,
+.logo-watermark-box .subtitulo-arquitetura {
+    color: var(--cor-branco); 
+}
+
+.logo-watermark-box .bloco-texto-logo {
+    display: none;
+}
+
+.link-logo-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+}
+
+.link-logo-vertical:hover { opacity: 0.7; }
+
+.img-logo-pequena {
+    max-width: 25px;
+    height: auto;
+    display: block;
+}
+
+.bloco-texto-logo {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.nome-principal {
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--cor-texto-forte);
+}
+
+.subtitulo-arquitetura {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--cor-texto-mutado);
+    margin-top: 0px;
+}
+
+/* ========================================================= */
+/* 8. FILTROS E MENU */
+/* ========================================================= */
+.navegacao-topo {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0; 
+    min-height: 0; 
+    margin-top: -30px;
+}
+
+.marca-topo-direito {
+    flex-direction: row; 
+    align-items: baseline; 
+    gap: 6px; 
+    margin-bottom: 12px;
+    text-decoration: none; 
+    transition: opacity 0.3s ease; 
+}
+
+.marca-topo-direito:hover {
+    opacity: 0.6; 
+}
+
+.marca-topo-direito .nome-principal {
+    color: var(--cor-texto-medio); 
+}
+
+.marca-topo-direito .subtitulo-arquitetura {
+    color: var(--cor-texto-mutado); 
+}
+
+.filtros-categoria { margin: 0px; margin-bottom: 45px; } 
+.filtros-categoria ul { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 4px 20px; 
+    list-style: none; 
+    padding: 0; 
+    margin: 0; 
+    max-width: 380px; 
+}
+
+.filtros-categoria li a {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-decoration: none;
+    color: var(--cor-texto-inativo);
+    transition: 0.3s;
+    display: block; 
+    line-height: 0.8; 
+}
+.filtros-categoria li a:hover { color: var(--cor-texto-forte);  }
+.filtros-categoria li a.filtro-ativo { color: var(--cor-texto-forte); font-weight: bold; }
+
+.menu-projetos {
+    flex-grow: 1; 
+    min-height: 0;
+    overflow-y: auto; 
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.menu-projetos::-webkit-scrollbar { display: none; }
+.menu-projetos ul { list-style: none; padding: 0; margin: 0; }
+
+.item-projeto { 
+    position: relative; 
+    margin-bottom: 0px; 
+    padding-top: 10px;
+    margin-top: -10px;
+}
+
+.item-projeto a {
+    display: inline-block; 
+    text-decoration: none;
+    color: var(--cor-texto-claro); 
+    font-size: 2rem;
+    line-height: 1.1; 
+    transition: color 0.3s ease, transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+    font-weight: bold;
+    transform: translateY(0);
+}
+.item-projeto:hover a { color: var(--cor-texto-hover); }
+.item-projeto.projeto-ativo a { color: var(--cor-texto-forte); font-weight: bold; }
+
+/* ========================================================= */
+/* 9. FICHA TÉCNICA LATERAL */
+/* ========================================================= */
+.container-dinamico-lateral {
+    transition: opacity 0.4s ease, transform 0.4s ease; 
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.ficha-tecnica {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.texto-descricao-lateral img, 
+.texto-descricao-lateral figure,
+.texto-descricao-lateral .wp-block-image {
+    display: none !important;
+}
+
+.titulo-projeto-destaque {
+    font-size: 2rem; 
+    font-weight: bold;
+    text-transform: uppercase;
+    line-height: 1;
+    color: var(--cor-texto-forte);
+    letter-spacing: normal;
+    margin: 0 !important; 
+    padding: 0 !important;
+    transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.4s ease;
+}
+
+.texto-descricao-lateral {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--cor-texto-medio);
+    max-width: 400px;
+    margin-top: 0 !important; 
+    padding-top: 0 !important;
+    opacity: 0; 
+    flex-grow: 1; 
+    min-height: 0; 
+    overflow-y: auto; 
+    overscroll-behavior: contain; 
+    scrollbar-width: none; 
+    -ms-overflow-style: none; 
+}
+.texto-descricao-lateral::-webkit-scrollbar { display: none; }
+
+.texto-descricao-interno {
+    padding-right: 20px; 
+}
+
+.texto-descricao-lateral p,
+.texto-descricao-lateral h1,
+.texto-descricao-lateral h2,
+.texto-descricao-lateral h3,
+.texto-descricao-lateral div,
+.texto-descricao-lateral ul,
+.texto-descricao-lateral li {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+.texto-descricao-lateral p { 
+    margin-bottom: 15px; 
+}
+
+.autoria-projeto {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--cor-texto-medio);
+    margin: 8px 0 20px 0 !important; 
+    padding: 0 !important;
+    opacity: 0; 
+}
+
+/* ========================================================= */
+/* 10. INDICADORES, INTRO E HOVER */
+/* ========================================================= */
+.scroll-indicator {
+    position: absolute;
+    bottom: 40px;
+    left: 30%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: auto; 
+    cursor: pointer; 
+    z-index: 100;
+    transition: opacity 0.4s;
+}
+
+.scroll-text {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--cor-texto-forte);
+    margin-bottom: 8px;
+    display: none; 
+}
+.home .scroll-text {
+    display: block; 
+}
+
+.scroll-arrow {
+    width: 15px; height: 15px;
+    border-right: 2px solid var(--cor-branco); 
+    border-bottom: 2px solid var(--cor-branco);
+    transform: rotate(45deg);
+    animation: bounce-arrow 2s infinite;
+}
+
+.home .scroll-arrow {
+    border-color: var(--cor-texto-forte); 
+}
+
+@keyframes bounce-arrow {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0) rotate(45deg); }
+    40% { transform: translateY(-10px) rotate(45deg); }
+    60% { transform: translateY(-5px) rotate(45deg); }
+}
+
+.intro-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--cor-bg-principal); 
+    z-index: 99999; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+
+.intro-logo-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+}
+
+.intro-mask {
+    overflow: hidden;
+    padding-bottom: 2px;
+}
+
+.intro-anim {
+    transform: translateY(110%);
+    transition: transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+    display: block; 
+}
+
+.intro-logo-box > .intro-mask .intro-anim { transition-delay: 0.1s; } 
+.intro-logo-box .bloco-texto-logo .intro-mask:nth-child(1) .intro-anim { transition-delay: 0.25s; } 
+.intro-logo-box .bloco-texto-logo .intro-mask:nth-child(2) .intro-anim { transition-delay: 0.4s; } 
+
+.intro-overlay.animar .intro-anim { transform: translateY(0); }
+.intro-overlay.ocultar { opacity: 0; visibility: hidden; }
+
+.area-scroll-thumbs {
+    position: fixed; 
+    top: 0;
+    left: 0;
+    width: 100vw; 
+    height: 100vh;
+    z-index: 9999; 
+    pointer-events: none; 
+    opacity: 0; 
+    transition: opacity 0.4s ease;
+}
+
+.area-scroll-thumbs.ativo {
+    opacity: 1; 
+}
+
+#prevHover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 260px; 
+    height: 260px; 
+    overflow: hidden;
+    transition: transform 0.15s ease-out;
+    will-change: transform;
+}
+
+.prev-hover-img {
+    position: absolute; 
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important; 
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#prevHover .prev-hover-img img {
+    width: 100% !important;
+    height: 100% !important; 
+    object-fit: cover !important; 
+}
+
+.prev-hover-img.thumb-ativo {
+    opacity: 1 !important;
+    z-index: 999 !important; 
+}
+
+/* ========================================================= */
+/* 11. SEÇÃO SOBRE (HOME PAGE) */
+/* ========================================================= */
+.secao-sobre-home {
+    width: 100%;
+    height: 150vh; 
+    background-color: var(--cor-bg-principal);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; 
+    padding-top: 0 !important; 
+    box-sizing: border-box;
+    opacity: 1; 
+    transform: none; 
+}
+
+.conteudo-sobre {
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+    position: sticky;
+    top: 168px; 
+}
+
+.sobre-texto h2 {
+    font-size: 2rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--cor-texto-forte);
+    margin: 0 0 30px 0;
+    line-height: 1;
+}
+
+.sobre-texto p {
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--cor-texto-medio);
+    margin-top: 0;
+    margin-bottom: 15px;
+    max-width: 90%;
+}
+
+.sobre-contato h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--cor-texto-forte);
+    margin: 0 0 15px 0;
+}
+
+.sobre-contato p {
+    font-size: 11px;
+    line-height: 1.8;
+    color: var(--cor-texto-mutado);
+    margin: 0;
+}
+
+.sobre-contato a { text-decoration: none; color: inherit; transition: color 0.3s ease; }
+.sobre-contato a:hover { color: var(--cor-texto-forte); }
+
+/* =========================================================================
+   12. ZOOM DE IMAGEM — barra lateral deslizante
+   ========================================================================= */
+#barraZoom {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 0; 
+    z-index: 48;
+    pointer-events: none; 
+    overflow: hidden; 
+    background-size: 0 0 !important; 
+    background-color: var(--cor-bg-escuro); 
+}
+
+#barraZoom.is-active {
+    pointer-events: auto;
+    cursor: w-resize; 
+}
+
+#barraZoom::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--bar-width, 60vw); 
+    height: 100vh;
+    background-image: inherit; 
+    background-size: 100% auto; 
+    background-repeat: no-repeat; 
+    background-position: top left; 
+}
+
+#mainContent {
+    box-sizing: border-box; 
+    transition: opacity 0.2s ease;
+}
+
+.conteudo-projeto img {
+    transition: opacity 0.3s ease, filter 0.3s ease;
+    height: auto !important;
+    backface-visibility: hidden; 
+}
+
+body {
+    overflow-x: hidden !important;
+}
+
+body.is-zoom-active .conteudo-projeto img {
+    cursor: zoom-out; 
+}
+
+.single .conteudo-projeto img {
+    cursor: zoom-in;
+}
+
+.single #mainContent[style*="padding-left"] .conteudo-projeto img {
+    cursor: pointer; 
+}
+
