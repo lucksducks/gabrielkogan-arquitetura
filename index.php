@@ -8,7 +8,7 @@
 </head>
 <body <?php body_class(); ?>>
 
-<div id="barraZoom" style="background-image: url('<?php echo esc_url( get_template_directory_uri() ); ?>/img/bg-zoom.jpg');"></div>
+<div id="barraZoom" data-bg-zoom-url="<?php echo is_single() ? esc_url(get_post_meta(get_the_ID(), 'bg_zoom_image', true)) : ''; ?>" style="background-image: url('<?php echo is_single() && get_post_meta(get_the_ID(), 'bg_zoom_image', true) ? esc_url(get_post_meta(get_the_ID(), 'bg_zoom_image', true)) : esc_url(get_template_directory_uri()) . '/img/bg-zoom.jpg'; ?>');"></div>
 
 <div id="easterEggTrigger" style="position: fixed; bottom: 0; left: 0; width: 60px; height: 60px; z-index: 9999;"></div>
 
@@ -83,19 +83,7 @@
 
 <?php if ( is_front_page() ) : ?>
 <div id="introOverlay" class="intro-overlay">
-    <div class="intro-logo-box">
-        <div class="intro-mask">
-            <img src="<?php echo esc_url( get_template_directory_uri() ); ?>/img/logo.png" alt="Gabriel Kogan" class="img-logo-pequena intro-anim">
-        </div>
-        <div class="bloco-texto-logo">
-            <div class="intro-mask">
-                <span class="nome-principal intro-anim">GABRIEL KOGAN</span>
-            </div>
-            <div class="intro-mask">
-                <span class="subtitulo-arquitetura intro-anim"><?php echo esc_html( $txt_arq_subtit ); ?></span>
-            </div>
-        </div>
-    </div>
+    <img src="<?php echo esc_url( get_template_directory_uri() ); ?>/img/hanko.png" alt="Hanko" class="img-hanko-intro">
 </div>
 <?php endif; ?>
 

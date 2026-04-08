@@ -8,6 +8,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const lateral   = document.querySelector('.container-dinamico-lateral');
     const barraZoom = document.getElementById('barraZoom');
 
+    // ⭐ Garantir que a imagem bg-zoom dinâmica está configurada
+    const bgZoomUrl = barraZoom?.dataset.bgZoomUrl;
+    if (bgZoomUrl) {
+        barraZoom.style.backgroundImage = `url('${bgZoomUrl}')`;
+    }
+
+    // ⭐ Atualiza a imagem de fundo do barraZoom ao trocar de projeto (AJAX)
+    function atualizarBgZoomDinamico() {
+        const barraZoom = document.getElementById('barraZoom');
+        if (!barraZoom) return;
+        const bgZoomUrl = barraZoom.dataset.bgZoomUrl;
+        if (bgZoomUrl) {
+            barraZoom.style.backgroundImage = `url('${bgZoomUrl}')`;
+        } else {
+            // Fallback para padrão
+            barraZoom.style.backgroundImage = `url('${window.temaConfig?.homeUrl || ''}wp-content/themes/tema-tiete178lab/img/bg-zoom.jpg')`;
+        }
+    }
+
+    atualizarBgZoomDinamico();
+    document.addEventListener('DOMContentLoaded', atualizarBgZoomDinamico);
+
     let permitirsSumico       = false;
     let isCarregando          = false;
     let fichaTecnicaCache     = document.body.classList.contains('single') ? lateral.innerHTML : null;
@@ -17,6 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let zoomAtivo       = false;
     let imagemZoomAtual = null;
     let scrollBaseZoom  = 0;
+    let barWidthAtual   = 0;
+    let transitandoZoom = false;
 
     let movePreviewRef  = null;
     let timersNavegacao = [];
@@ -24,77 +48,81 @@ document.addEventListener('DOMContentLoaded', () => {
     function limparTimers() {
         timersNavegacao.forEach(clearTimeout);
         timersNavegacao = [];
-        
+
         if (movePreviewRef) {
             window.removeEventListener('mousemove', movePreviewRef);
             movePreviewRef = null;
         }
-        
-        // Mata clones zumbis garantindo a limpeza
+
         document.querySelectorAll('.clone-titulo-animacao').forEach(el => el.remove());
     }
 
     // =========================================================================
-    // ZOOM DE IMAGEM — ARQUITETURA DE INTENÇÃO (O Padrão Ouro)
+    // ZOOM DE IMAGEM
     // =========================================================================
 
     const easeInOutQuint = (t) => t < 0.5 ? 16 * t * t * t * t * t : 1 - Math.pow(-2 * t + 2, 5) / 2;
     let isZoomAnimating = false;
 
-    // A MÁGICA 1: O Snap de Saída (Quando o usuário rola a página)
-    function snapSairDoZoom() {
+    // FIX 2: recebe flag isTransitioning para evitar lenis.resize() durante transição entre zooms
+    function snapSairDoZoom(isTransitioning = false) {
         if (!zoomAtivo || isZoomAnimating) return;
 
-        const img = imagemZoomAtual;
-        const viewportY = img.getBoundingClientRect().top; // Onde a foto está na tela agora?
+        isZoomAnimating = true;
+        lenis.stop();
 
-        // 1. Desliga tudo instantaneamente (Snap)
         zoomAtivo = false;
+        barWidthAtual = 0;
         document.body.classList.remove('is-zoom-active');
         barraZoom.classList.remove('is-active');
+        barraZoom.classList.remove('bg-zoom--panorama', 'bg-zoom--normal', 'bg-zoom--tall');
 
         area.style.paddingLeft = '0px';
-        barraZoom.style.width = '0px';
-
-        // 2. Ancoragem Silenciosa: Atualiza o scroll para a foto não sair do lugar
-        const newDocY = img.offsetTop;
-        lenis.scrollTo(newDocY - viewportY, { immediate: true });
-        lenis.resize();
+        barraZoom.style.width  = '0px';
 
         imagemZoomAtual = null;
+        isZoomAnimating = false;
+        lenis.start();
+
+        // FIX 2: só recalcula o scroll quando saindo do zoom definitivamente,
+        // não quando está transitando para outra imagem (evita o salto de posição)
+        if (!isTransitioning) {
+            lenis.resize();
+        }
     }
 
-    // A MÁGICA 2: O Motor de Animação Cinematográfica (Quando o usuário clica)
-    function runZoomAnimation(img, startY, targetY, startPadding, targetPadding, isEntering) {
+    function runZoomAnimation(img, startY, targetY, startPadding, targetPadding, isEntering, allowScroll = false) {
         isZoomAnimating = true;
         if (isEntering) zoomAtivo = true;
         imagemZoomAtual = img;
 
         if (isEntering) barraZoom.classList.add('is-active');
-        
-        // TRAVA DE SEGURANÇA: O usuário não pode rolar enquanto o layout se move
-        lenis.stop(); 
 
-        const duration = 700; // 0.7s para elegância
-        const startTime = performance.now();
+        lenis.stop();
+
+        const duration    = 700;
+        const startTime   = performance.now();
+        const scrollAtStart = lenis.scroll;
 
         function frame(time) {
-            const elapsed = time - startTime;
+            const elapsed  = time - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            const eased = easeInOutQuint(progress);
+            const eased    = easeInOutQuint(progress);
 
-            // Anima a largura
             const currentPadding = startPadding + (targetPadding - startPadding) * eased;
             area.style.paddingLeft = currentPadding + 'px';
-            barraZoom.style.width = currentPadding + 'px';
+            barraZoom.style.width  = currentPadding + 'px';
 
-            // Ancora a câmera milimetricamente frame a frame
-            const actualY = img.getBoundingClientRect().top;
-            const expectedY = startY + (targetY - startY) * eased;
-            const diff = actualY - expectedY;
+            if (!allowScroll) {
+                const actualY    = img.getBoundingClientRect().top;
+                const expectedY  = startY + (targetY - startY) * eased;
+                const diff       = actualY - expectedY;
 
-            area.scrollTop += diff;
-            lenis.scrollTo(area.scrollTop, { immediate: true });
+                area.scrollTop += diff;
+                lenis.scrollTo(area.scrollTop, { immediate: true });
+            } else {
+                lenis.scrollTo(scrollAtStart, { immediate: true });
+            }
 
             if (progress < 1) {
                 requestAnimationFrame(frame);
@@ -102,68 +130,110 @@ document.addEventListener('DOMContentLoaded', () => {
                 isZoomAnimating = false;
                 if (isEntering) {
                     document.body.classList.add('is-zoom-active');
-                    scrollBaseZoom = lenis.scroll; // Grava o chão para o gatilho de rolar
+                    scrollBaseZoom  = lenis.scroll;
+                    transitandoZoom = false;
                 } else {
                     document.body.classList.remove('is-zoom-active');
                     barraZoom.classList.remove('is-active');
-                    zoomAtivo = false;
+                    barraZoom.classList.remove('bg-zoom--panorama', 'bg-zoom--normal', 'bg-zoom--tall');
+                    barWidthAtual   = 0;
+                    zoomAtivo       = false;
                     imagemZoomAtual = null;
+                    transitandoZoom = false;
                 }
-                lenis.start(); // DEVOLVE o scroll para o usuário
+                lenis.start();
                 lenis.resize();
             }
         }
         requestAnimationFrame(frame);
     }
 
-    // GATILHO: Entrar no Zoom (Clique)
     function ativarZoom(img) {
-        if (!img || zoomAtivo || isZoomAnimating) return;
+        if (!img || isZoomAnimating) return;
 
-        const startY = img.getBoundingClientRect().top;
+        // FIX 2: passa isTransitioning=true para evitar lenis.resize() durante a troca
+        if (zoomAtivo) {
+            transitandoZoom = true;
+            snapSairDoZoom(true);
+        }
+
+        const startY    = img.getBoundingClientRect().top;
         const areaWidth = area.offsetWidth;
-        const r = img.naturalWidth / img.naturalHeight;
+        const r         = img.naturalWidth / img.naturalHeight;
 
-        if (r >= 1) return; // Trava para focar apenas em fotos verticais
+        let contentWidth  = window.innerHeight * r;
+        let contentHeight = window.innerHeight;
 
-        const targetContentWidth = window.innerHeight * r;
-        const barWidth = areaWidth - targetContentWidth;
-        
-        if (barWidth < 10) return;
+        if (contentWidth > areaWidth) {
+            contentWidth  = areaWidth;
+            contentHeight = areaWidth / r;
+        }
 
+        const barWidth = areaWidth - contentWidth;
+
+        if (barWidth < 0) return;
+
+        // FIX 1: imagem pequena (sem espaço real para barra) → só scroll para o topo,
+        // sem entrar no estado de zoom. Evita zoomAtivo=true com barWidthAtual=0,
+        // que impedia o guard de scroll de disparar e causava o salto ao clicar a próxima imagem.
+        if (barWidth < 20) {
+            transitandoZoom = false;
+            lenis.scrollTo(lenis.scroll + startY, {
+                duration: 0.7,
+                easing: easeInOutQuint,
+            });
+            return;
+        }
+
+        barWidthAtual = barWidth;
         barraZoom.style.setProperty('--bar-width', barWidth + 'px');
 
-        const startPadding = 0;
+        barraZoom.classList.remove('bg-zoom--panorama', 'bg-zoom--normal', 'bg-zoom--tall');
+
+        if (r > 1.5) {
+            barraZoom.classList.add('bg-zoom--panorama');
+        } else if (r < 1) {
+            barraZoom.classList.add('bg-zoom--tall');
+        } else {
+            barraZoom.classList.add('bg-zoom--normal');
+        }
+
+        const startPadding  = 0;
         const targetPadding = barWidth;
-        const targetY = 0; // A foto vai para o teto da tela
-        
+        const targetY       = 0;
+
         runZoomAnimation(img, startY, targetY, startPadding, targetPadding, true);
     }
 
-    // GATILHO: Sair do Zoom (Clique)
     function desativarZoomViaClique() {
         if (!zoomAtivo || isZoomAnimating) return;
 
         const img = imagemZoomAtual;
-        const startY = img.getBoundingClientRect().top;
+
+        // FIX 3: guard contra imagemZoomAtual null (race condition defensivo)
+        if (!img) {
+            snapSairDoZoom();
+            return;
+        }
+
+        const startY       = img.getBoundingClientRect().top;
         const startPadding = parseFloat(area.style.paddingLeft) || 0;
         const targetPadding = 0;
 
-        // Tática "Measure First" com REFLOW forçado (Acaba com a piscada!)
         area.style.paddingLeft = '0px';
-        area.offsetHeight; // NUNCA remova isso. É o que obriga o navegador a processar o CSS.
+        area.offsetHeight;
         const targetHeight = img.offsetHeight;
-        
-        area.style.paddingLeft = startPadding + 'px'; 
-        area.offsetHeight; // Força o retorno antes de começar o loop
 
-        // Calcula exatamente onde a foto deve parar para ficar centralizada
+        area.style.paddingLeft = startPadding + 'px';
+        area.offsetHeight;
+
         const targetY = (window.innerHeight / 2) - (targetHeight / 2);
 
-        runZoomAnimation(img, startY, targetY, startPadding, targetPadding, false);
+        runZoomAnimation(img, startY, targetY, startPadding, targetPadding, false, false);
     }
+
     // =========================================================================
-    // LENIS — SMOOTH SCROLL (Motor Manual Restaurado)
+    // LENIS — SMOOTH SCROLL
     // =========================================================================
     const lenis = new Lenis({
         wrapper:         area,
@@ -200,10 +270,8 @@ document.addEventListener('DOMContentLoaded', () => {
     requestAnimationFrame(raf);
 
     // =========================================================================
-    // HOVER PREVIEW — DELEGAÇÃO DE EVENTOS (À prova de AJAX / Sem Memory Leak)
+    // HOVER PREVIEW
     // =========================================================================
-    
-    // Mouseover bolha pelo DOM. Ouvimos no document para não perder referência no AJAX.
     document.addEventListener('mouseover', (e) => {
         const item = e.target.closest('.item-projeto');
         if (!item || item.classList.contains('projeto-ativo')) return;
@@ -223,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     prevHoverBox.style.transform = `translate3d(${ev.clientX - (boxWidth / 2) - 180}px, ${ev.clientY + 20}px, 0)`;
                 };
                 window.addEventListener('mousemove', movePreviewRef);
-                movePreviewRef(e); // Aciona imediatamente para a primeira posição
+                movePreviewRef(e);
             }
         }
     });
@@ -247,9 +315,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     async function carregarPagina(url, atualizarHistorico = true, apenasLateral = false, elementoClicado = null) {
         if (isCarregando) return;
-        
+
         limparTimers();
-        snapSairDoZoom(); 
+        snapSairDoZoom(); // isTransitioning=false → chama lenis.resize() normalmente
         isCarregando = true;
 
         try {
@@ -272,10 +340,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isIndoParaLista && temTituloNaTela) {
                 textoProjetoAtual  = tituloAtual.innerText.trim();
                 rectInicialDescida = tituloAtual.getBoundingClientRect();
-                
+
                 cloneDescida = tituloAtual.cloneNode(true);
-                cloneDescida.classList.add('clone-titulo-animacao'); // FIX 2 APLICADO: Classe inserida no clone
-                
+                cloneDescida.classList.add('clone-titulo-animacao');
+
                 const descAtual = lateral.querySelector('.texto-descricao-lateral');
                 if (descAtual) descAtual.style.opacity = '0';
             }
@@ -341,22 +409,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (Math.abs(deltaY) > 5) {
                         tituloVoou = true;
                         tituloDestaque.style.transition = 'none';
-                        tituloDestaque.style.transform  = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
-                        tituloDestaque.offsetHeight;
-                        tituloDestaque.style.transition = 'transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1)';
-                        tituloDestaque.style.transform  = 'translate3d(0, 0, 0)';
+                        tituloDestque.style.transform  = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
+                        tituloDestque.offsetHeight;
+                        tituloDestque.style.transition = 'transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1)';
+                        tituloDestque.style.transform  = 'translate3d(0, 0, 0)';
                     }
-                } else if (tituloDestaque) {
-                    tituloDestaque.style.transform = 'none';
+                } else if (tituloDestque) {
+                    tituloDestque.style.transform = 'none';
                 }
 
-                if (autoriaDestaque) {
-                    autoriaDestaque.style.opacity   = '0';
-                    autoriaDestaque.style.transform = 'translateY(10px)';
+                if (autoriaDestque) {
+                    autoriaDestque.style.opacity   = '0';
+                    autoriaDestque.style.transform = 'translateY(10px)';
                     timersNavegacao.push(setTimeout(() => {
-                        autoriaDestaque.style.transition = 'all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1)';
-                        autoriaDestaque.style.opacity    = '1';
-                        autoriaDestaque.style.transform  = 'translateY(0)';
+                        autoriaDestque.style.transition = 'all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1)';
+                        autoriaDestque.style.opacity    = '1';
+                        autoriaDestque.style.transform  = 'translateY(0)';
                     }, 150));
                 }
 
@@ -509,20 +577,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (document.body.classList.contains('single')) {
             const img = e.target.closest('.conteudo-projeto img');
-            
+
             if (img) {
                 e.preventDefault();
                 if (zoomAtivo) {
-                    desativarZoomViaClique(); // Faz a animação cinematográfica
+                    desativarZoomViaClique();
                 } else {
                     ativarZoom(img);
                 }
                 return;
             }
-            
-            // Clicar na barra preta também desativa (mantemos como fallback de segurança)
+
             if (e.target.id === 'barraZoom') {
-                desativarZoom();
+                desativarZoomViaClique();
                 return;
             }
         }
@@ -560,7 +627,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // SCROLL — revelação e indicadores
     // =========================================================================
     function resetarInteracoes() {
-        desativarZoom(); 
+        snapSairDoZoom();
 
         if (document.body.classList.contains('home')) {
             const secaoSobre = document.getElementById('secaoSobre');
@@ -591,12 +658,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // FIX 3: Salva referência da função onScroll e atrela
     const onScroll = (e) => {
-        // LÓGICA DE DESARME DO ZOOM PELO SCROLL
-        if (zoomAtivo && !isZoomAnimating) {
-            if (Math.abs(e.animatedScroll - scrollBaseZoom) > 40) {
-                snapSairDoZoom(); // Snap instantâneo, não bloqueia o dedo do usuário
+        if (zoomAtivo && !isZoomAnimating && !transitandoZoom && barWidthAtual > 10) {
+            if (Math.abs(e.animatedScroll - scrollBaseZoom) > 5) {
+                desativarZoomViaClique();
             }
         }
 

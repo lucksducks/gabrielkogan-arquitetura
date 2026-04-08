@@ -94,3 +94,97 @@ function tiete_enqueue_scripts() {
         'homeUrl'     => esc_url( home_url('/') ), // útil para o JS construir links
     ));
 }
+
+// =========================================================================
+// 📷 BG-ZOOM IMAGE — SELETOR DE IMAGEM POR POST
+// =========================================================================
+// Registrar meta field
+add_action('init', function() {
+    register_post_meta('post', 'bg_zoom_image', array(
+        'type'          => 'string',
+        'single'        => true,
+        'show_in_rest'  => true,
+    ));
+});
+
+// Adicionar meta box no editor
+add_action('add_meta_boxes', function() {
+    add_meta_box(
+        'bg_zoom_image_meta',
+        '📷 Imagem BG-ZOOM',
+        'renderizar_meta_box_bg_zoom',
+        'post',
+        'normal',
+        'high'
+    );
+});
+
+// Renderizar o meta box
+function renderizar_meta_box_bg_zoom($post) {
+    wp_nonce_field('salvar_bg_zoom_nonce', 'bg_zoom_nonce_campo');
+    
+    $bgZoomUrl = get_post_meta($post->ID, 'bg_zoom_image', true);
+    
+    ?>
+    <div style="margin-bottom: 20px;">
+        <p><strong>Escolha uma imagem para exibir na barra lateral ao fazer zoom:</strong></p>
+        
+        <!-- Preview -->
+        <div style="margin-bottom: 15px;">
+            <img id="bg-zoom-preview" 
+                 src="<?php echo $bgZoomUrl ? esc_url($bgZoomUrl) : ''; ?>" 
+                 style="max-width: 300px; max-height: 400px; <?php echo $bgZoomUrl ? '' : 'display:none;'; ?>" />
+        </div>
+        
+        <!-- Campo hidden para armazenar URL -->
+        <input type="hidden" id="bg_zoom_image_url" name="bg_zoom_image_url" value="<?php echo esc_url($bgZoomUrl); ?>" />
+        
+        <!-- Botões -->
+        <button type="button" class="button button-primary" id="select-bg-zoom" onclick="selecionarBgZoom()">
+            Selecionar Imagem
+        </button>
+        <button type="button" class="button" id="remove-bg-zoom" onclick="removerBgZoom()" 
+                <?php echo $bgZoomUrl ? '' : 'style="display:none;"'; ?>>
+            Remover Imagem
+        </button>
+    </div>
+    
+    <script>
+    function selecionarBgZoom() {
+        var frame = wp.media({
+            title: 'Selecionar Imagem BG-ZOOM',
+            button: { text: 'Usar Esta Imagem' },
+            multiple: false,
+            library: { type: 'image' }
+        });
+        
+        frame.on('select', function() {
+            var attachment = frame.state().get('selection').first().toJSON();
+            document.getElementById('bg_zoom_image_url').value = attachment.url;
+            document.getElementById('bg-zoom-preview').src = attachment.url;
+            document.getElementById('bg-zoom-preview').style.display = 'block';
+            document.getElementById('remove-bg-zoom').style.display = 'inline-block';
+        });
+        
+        frame.open();
+    }
+    
+    function removerBgZoom() {
+        document.getElementById('bg_zoom_image_url').value = '';
+        document.getElementById('bg-zoom-preview').style.display = 'none';
+        document.getElementById('remove-bg-zoom').style.display = 'none';
+    }
+    </script>
+    <?php
+}
+
+// Salvar meta data ao guardar post
+add_action('save_post_post', function($post_id) {
+    if (!isset($_POST['bg_zoom_nonce_campo']) || !wp_verify_nonce($_POST['bg_zoom_nonce_campo'], 'salvar_bg_zoom_nonce')) {
+        return;
+    }
+    
+    if (isset($_POST['bg_zoom_image_url'])) {
+        update_post_meta($post_id, 'bg_zoom_image', esc_url_raw($_POST['bg_zoom_image_url']));
+    }
+});

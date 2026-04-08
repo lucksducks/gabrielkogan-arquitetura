@@ -463,11 +463,15 @@ body, html {
     transition: opacity 0.8s ease, visibility 0.8s ease;
 }
 
+.intro-overlay.animar .img-hanko-intro {
+    animation-play-state: running;
+}
+
 .intro-logo-box {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
-    gap: 1px;
+    gap: 12px;
 }
 
 .intro-mask {
@@ -475,17 +479,39 @@ body, html {
     padding-bottom: 2px;
 }
 
-.intro-anim {
-    transform: translateY(110%);
-    transition: transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
-    display: block; 
+.intro-mask-hanko {
+    padding-bottom: 0;
 }
 
-.intro-logo-box > .intro-mask .intro-anim { transition-delay: 0.1s; } 
-.intro-logo-box .bloco-texto-logo .intro-mask:nth-child(1) .intro-anim { transition-delay: 0.25s; } 
-.intro-logo-box .bloco-texto-logo .intro-mask:nth-child(2) .intro-anim { transition-delay: 0.4s; } 
+.intro-coluna-direita {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+}
 
-.intro-overlay.animar .intro-anim { transform: translateY(0); }
+.img-hanko {
+    max-width: 25px;
+    height: auto;
+    display: block;
+}
+
+.img-hanko-intro {
+    max-width: 40px;
+    height: auto;
+    display: block;
+    animation: fadeInHanko 1.2s ease-in-out 0.5s both;
+}
+
+@keyframes fadeInHanko {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
 .intro-overlay.ocultar { opacity: 0; visibility: hidden; }
 
 .area-scroll-thumbs {
@@ -629,6 +655,24 @@ body, html {
     background-size: 100% auto; 
     background-repeat: no-repeat; 
     background-position: top left; 
+}
+
+/* Modo panorâmica (proporção muito larga) — preenche altura */
+#barraZoom.bg-zoom--panorama::before {
+    background-size: cover;
+    background-position: center;
+}
+
+/* Modo normal (proporção equilibrada) — mantém 100% largura */
+#barraZoom.bg-zoom--normal::before {
+    background-size: 100% auto;
+    background-position: top left;
+}
+
+/* Modo muito vertical (proporção muito alta) — SEMPRE preencher com cover universal */
+#barraZoom.bg-zoom--tall::before {
+    background-size: cover;
+    background-position: center;
 }
 
 #mainContent {
