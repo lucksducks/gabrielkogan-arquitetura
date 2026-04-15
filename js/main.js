@@ -28,7 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     atualizarBgZoomDinamico();
-    document.addEventListener('DOMContentLoaded', atualizarBgZoomDinamico);
 
     let permitirsSumico       = false;
     let isCarregando          = false;
@@ -44,6 +43,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let movePreviewRef  = null;
     let timersNavegacao = [];
+
+    // =========================================================================
+    // HOME SCROLL SNAP — estado
+    // =========================================================================
+    let homeSnapIndex    = 0;
+    let homeSnapCooldown = false;
+
+    // =========================================================================
+    // ALINHAMENTO DINÂMICO — topo da imagem home = topo da lista de projetos
+    // =========================================================================
+    function sincronizarOffsetImagem() {
+        if (!document.body.classList.contains('home')) return;
+        const lista = document.getElementById('listaProjetos');
+        if (!lista) return;
+        const offset = lista.getBoundingClientRect().top;
+        document.documentElement.style.setProperty('--home-img-offset', offset + 'px');
+    }
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(sincronizarOffsetImagem, 100);
+    });
 
     function limparTimers() {
         timersNavegacao.forEach(clearTimeout);
@@ -409,22 +431,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (Math.abs(deltaY) > 5) {
                         tituloVoou = true;
                         tituloDestaque.style.transition = 'none';
-                        tituloDestque.style.transform  = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
-                        tituloDestque.offsetHeight;
-                        tituloDestque.style.transition = 'transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1)';
-                        tituloDestque.style.transform  = 'translate3d(0, 0, 0)';
+                        tituloDestaque.style.transform  = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
+                        tituloDestaque.offsetHeight;
+                        tituloDestaque.style.transition = 'transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1)';
+                        tituloDestaque.style.transform  = 'translate3d(0, 0, 0)';
                     }
-                } else if (tituloDestque) {
-                    tituloDestque.style.transform = 'none';
+                } else if (tituloDestaque) {
+                    tituloDestaque.style.transform = 'none';
                 }
 
-                if (autoriaDestque) {
-                    autoriaDestque.style.opacity   = '0';
-                    autoriaDestque.style.transform = 'translateY(10px)';
+                if (autoriaDestaque) {
+                    autoriaDestaque.style.opacity   = '0';
+                    autoriaDestaque.style.transform = 'translateY(10px)';
                     timersNavegacao.push(setTimeout(() => {
-                        autoriaDestque.style.transition = 'all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1)';
-                        autoriaDestque.style.opacity    = '1';
-                        autoriaDestque.style.transform  = 'translateY(0)';
+                        autoriaDestaque.style.transition = 'all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1)';
+                        autoriaDestaque.style.opacity    = '1';
+                        autoriaDestaque.style.transform  = 'translateY(0)';
                     }, 150));
                 }
 
@@ -609,29 +631,272 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================================================================
-    // BOTÃO "SOBRE"
+    // HOME SCROLL SNAP — lógica
+    // =========================================================================
+    function getSnapSections() {
+        return [
+            area.querySelector('.wrap-projetos'),
+            document.getElementById('secaoSobre'),
+            document.getElementById('secaoYayoi'),
+            document.getElementById('secaoAlbum'),
+        ].filter(Boolean);
+    }
+
+    function atualizarDots(index) {
+        document.querySelectorAll('.snap-dot').forEach((dot, i) => {
+            dot.classList.toggle('snap-dot--ativo', i === index);
+        });
+    }
+
+    function snapParaSecaoIndexHome(index) {
+        if (homeSnapCooldown) return;
+        const sections = getSnapSections();
+        if (index < 0 || index >= sections.length) return;
+
+        homeSnapCooldown = true;
+        homeSnapIndex    = index;
+        atualizarDots(index);
+
+        lenis.scrollTo(sections[index], {
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        });
+
+        setTimeout(() => { homeSnapCooldown = false; }, 1300);
+    }
+
+    function snapParaSecaoHome(delta) {
+        snapParaSecaoIndexHome(homeSnapIndex + (delta > 0 ? 1 : -1));
+    }
+
+    area.addEventListener('wheel', (e) => {
+        if (!document.body.classList.contains('home') || zoomAtivo) return;
+        e.preventDefault();
+        e.stopPropagation();
+        snapParaSecaoHome(e.deltaY);
+    }, { passive: false, capture: true });
+
+    let touchStartY = 0;
+
+    area.addEventListener('touchstart', (e) => {
+        if (!document.body.classList.contains('home') || zoomAtivo) return;
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    area.addEventListener('touchmove', (e) => {
+        if (!document.body.classList.contains('home') || zoomAtivo) return;
+        e.preventDefault();
+    }, { passive: false });
+
+    area.addEventListener('touchend', (e) => {
+        if (!document.body.classList.contains('home') || zoomAtivo) return;
+        const deltaY = touchStartY - e.changedTouches[0].clientY;
+        if (Math.abs(deltaY) < 40) return;
+        snapParaSecaoHome(deltaY);
+    }, { passive: true });
+
+    // =========================================================================
+    // CLIQUE NOS DOTS DE NAVEGAÇÃO
     // =========================================================================
     if (indicator) {
-        indicator.addEventListener('click', () => {
-            const secaoSobre = document.getElementById('secaoSobre');
-            if (secaoSobre) {
-                lenis.scrollTo(secaoSobre, {
-                    duration: 1.5,
-                    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-                });
-            }
+        indicator.addEventListener('click', (e) => {
+            const dot = e.target.closest('.snap-dot');
+            if (!dot) return;
+            snapParaSecaoIndexHome(parseInt(dot.dataset.index, 10));
         });
     }
 
     // =========================================================================
     // SCROLL — revelação e indicadores
     // =========================================================================
+    // =========================================================================
+    // ALBUM DA SEMANA
+    // =========================================================================
+
+    function inicializarAlbum() {
+        if (!document.getElementById('secaoAlbum')) return;
+        inicializarPlayerAudio();
+        inicializarArquivo();
+    }
+
+    function inicializarPlayerAudio() {
+        const playerEl = document.getElementById('albumPlayer');
+        if (!playerEl) return;
+
+        const audio   = document.getElementById('albumAudio');
+        const playBtn = document.getElementById('albumPlayBtn');
+        const fill    = document.getElementById('albumProgressFill');
+        const track   = document.getElementById('albumProgressTrack');
+        const tempo   = document.getElementById('albumTempo');
+
+        const SVG_PLAY  = '<svg viewBox="0 0 10 10" width="10" height="10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>';
+        const SVG_PAUSE = '<svg viewBox="0 0 10 10" width="10" height="10" fill="currentColor"><rect x="1.5" y="1" width="2.5" height="8"/><rect x="6" y="1" width="2.5" height="8"/></svg>';
+
+        const src = playerEl.dataset.src || '';
+        if (src) audio.src = src;
+
+        playBtn.addEventListener('click', () => {
+            if (!audio.src || audio.src === window.location.href) return;
+            if (audio.paused) {
+                playBtn.textContent = '…';
+                audio.play()
+                    .then(() => {
+                        playBtn.innerHTML = SVG_PAUSE;
+                        playBtn.setAttribute('aria-label', 'Pausar');
+                        playBtn.classList.add('tocando');
+                    })
+                    .catch((err) => {
+                        console.error('[Album player]', err);
+                        playBtn.innerHTML = SVG_PLAY;
+                        tempo.textContent = 'erro';
+                    });
+            } else {
+                audio.pause();
+                playBtn.innerHTML = SVG_PLAY;
+                playBtn.setAttribute('aria-label', 'Tocar');
+                playBtn.classList.remove('tocando');
+            }
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            if (!audio.duration) return;
+            fill.style.width = (audio.currentTime / audio.duration * 100) + '%';
+            const s = Math.floor(audio.currentTime);
+            tempo.textContent = `${~~(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+        });
+
+        track.addEventListener('click', (e) => {
+            if (!audio.duration) return;
+            const rect = track.getBoundingClientRect();
+            audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
+        });
+
+        audio.addEventListener('ended', () => {
+            playBtn.innerHTML = SVG_PLAY;
+            playBtn.classList.remove('tocando');
+            fill.style.width = '0';
+            tempo.textContent = '0:00';
+        });
+    }
+
+    function inicializarArquivo() {
+        const btnAbrir  = document.getElementById('albumArquivoBtn');
+        const overlay   = document.getElementById('albumArquivoOverlay');
+        const btnFechar = document.getElementById('albumArquivoFechar');
+        const grid      = document.getElementById('albumArquivoGrid');
+        if (!btnAbrir || !overlay || !grid) return;
+
+        const arquivo = (typeof temaConfig !== 'undefined' && temaConfig.albumArquivo) ? temaConfig.albumArquivo : [];
+
+        if (arquivo.length > 0) {
+            grid.innerHTML = arquivo.map(a => `
+                <div class="album-card" data-id="${parseInt(a.id, 10)}">
+                    <div class="album-card-capa">
+                        <img src="${a.thumb_url}" alt="${String(a.titulo).replace(/"/g, '&quot;')}" loading="lazy">
+                    </div>
+                    <div class="album-card-titulo">${a.titulo}</div>
+                    <div class="album-card-artista">${a.artista} &middot; ${a.ano}</div>
+                </div>
+            `).join('');
+
+            grid.addEventListener('click', (e) => {
+                const card = e.target.closest('.album-card');
+                if (!card) return;
+                carregarAlbumAjax(parseInt(card.dataset.id, 10));
+                fecharArquivo();
+            });
+        } else {
+            grid.innerHTML = '<p style="color:var(--cor-texto-inativo);font-size:12px;">Nenhum álbum anterior.</p>';
+        }
+
+        const fecharArquivo = () => {
+            overlay.classList.remove('visivel');
+            overlay.setAttribute('aria-hidden', 'true');
+        };
+
+        btnAbrir.addEventListener('click', () => {
+            overlay.classList.add('visivel');
+            overlay.setAttribute('aria-hidden', 'false');
+        });
+
+        btnFechar.addEventListener('click', fecharArquivo);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && overlay.classList.contains('visivel')) fecharArquivo();
+        });
+    }
+
+    function carregarAlbumAjax(id) {
+        if (typeof temaConfig === 'undefined' || !temaConfig.ajaxUrl) return;
+        fetch(`${temaConfig.ajaxUrl}?action=get_album_semana&id=${id}`)
+            .then(r => r.json())
+            .then(({ success, data }) => {
+                if (success && data) atualizarDomAlbum(data);
+            })
+            .catch(() => {});
+    }
+
+    function atualizarDomAlbum(data) {
+        // Capa
+        const img = document.querySelector('#albumDisc img');
+        if (img) { img.src = data.cover_url || ''; img.alt = data.titulo || ''; }
+
+        // Player — parar e trocar src
+        const audio    = document.getElementById('albumAudio');
+        const playBtn  = document.getElementById('albumPlayBtn');
+        const fill     = document.getElementById('albumProgressFill');
+        const tempo    = document.getElementById('albumTempo');
+        const playerEl = document.getElementById('albumPlayer');
+        if (audio)    { audio.pause(); audio.src = data.audio_url || ''; }
+        if (playBtn)  { playBtn.classList.remove('tocando'); playBtn.setAttribute('aria-label', 'Tocar'); playBtn.disabled = !data.audio_url; }
+        if (fill)     fill.style.width = '0';
+        if (tempo)    tempo.textContent = data.audio_url ? '0:00' : '—';
+        if (playerEl) playerEl.dataset.src = data.audio_url || '';
+
+        // Textos
+        const artista = document.querySelector('.album-artista');
+        const titulo  = document.querySelector('.album-titulo');
+        const meta    = document.querySelector('.album-meta');
+        if (artista) artista.textContent = data.artista || '';
+        if (titulo)  titulo.textContent  = data.titulo  || '';
+        if (meta)    meta.textContent    = [data.ano, data.genero].filter(Boolean).join(' · ');
+
+        // Review
+        const review = document.getElementById('albumReview');
+        if (review) review.innerHTML = data.review_html || '';
+
+        // Tracklist — faixa_destaque highlighted via CSS class
+        const ol = document.querySelector('#albumTracklist ol');
+        if (ol) {
+            const hintNorm = (data.faixa_destaque || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            ol.innerHTML = (data.tracklist || []).map(t => {
+                const tNorm = t.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const destaque = hintNorm && tNorm &&
+                    (tNorm.includes(hintNorm) || hintNorm.includes(tNorm));
+                return `<li${destaque ? ' class="faixa-destaque"' : ''}>${t}</li>`;
+            }).join('');
+        }
+
+        // Streaming links
+        const streamingEl = document.getElementById('albumStreaming');
+        if (streamingEl) {
+            streamingEl.innerHTML = (data.streaming_links || [])
+                .map(l => `<a href="${l.url}" target="_blank" rel="noopener noreferrer">${l.name}</a>`)
+                .join('');
+        }
+
+        // Re-extrai cor da nova capa
+        extrairCorCapa();
+    }
+
     function resetarInteracoes() {
         snapSairDoZoom();
 
         if (document.body.classList.contains('home')) {
-            const secaoSobre = document.getElementById('secaoSobre');
-            if (secaoSobre) secaoSobre.classList.remove('revelada');
+            homeSnapIndex    = 0;
+            homeSnapCooldown = false;
+            atualizarDots(0);
+            sincronizarOffsetImagem();
         }
 
         permitirsSumico = false;
@@ -654,7 +919,6 @@ document.addEventListener('DOMContentLoaded', () => {
             timersNavegacao.push(setTimeout(center, 250));
         } else {
             permitirsSumico = true;
-            if (indicator) indicator.style.opacity = '1';
         }
     }
 
@@ -666,17 +930,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!permitirsSumico) return;
-        const isHome = document.body.classList.contains('home');
-        if (indicator) {
-            indicator.style.opacity = (isHome && e.animatedScroll <= 100) ? '1' : '0';
-        }
-        if (isHome) {
-            const secaoSobre = document.getElementById('secaoSobre');
-            if (secaoSobre && e.animatedScroll > 10) {
-                secaoSobre.classList.add('revelada');
-                if (indicator) indicator.style.pointerEvents = 'none';
-            }
-        }
     };
     lenis.on('scroll', onScroll);
 
@@ -684,6 +937,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // LOAD INICIAL E SPLASH SCREEN
     // =========================================================================
     window.addEventListener('load', () => {
+        sincronizarOffsetImagem();
+        inicializarAlbum();
         const isSingle = document.body.classList.contains('single');
 
         if (isSingle) {
