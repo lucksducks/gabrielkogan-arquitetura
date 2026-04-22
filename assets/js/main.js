@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
             barraZoom.style.backgroundImage = `url('${bgZoomUrl}')`;
         } else {
             // Fallback para padrão
-            barraZoom.style.backgroundImage = `url('${window.temaConfig?.homeUrl || ''}wp-content/themes/tema-tiete178lab/img/bg-zoom.jpg')`;
+            barraZoom.style.backgroundImage = `url('${window.temaConfig?.homeUrl || ''}wp-content/themes/tema-tiete178lab/assets/img/bg-zoom.jpg')`;
         }
     }
 
@@ -635,7 +635,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     function getSnapSections() {
         return [
-            area.querySelector('.wrap-projetos'),
+            document.getElementById('secaoCapa'),
             document.getElementById('secaoSobre'),
             document.getElementById('secaoYayoi'),
             document.getElementById('secaoAlbum'),

@@ -33,7 +33,7 @@ Description: Layout 2/3 + 1/3, Ficha Técnica Animada Colada (0px), Logo no Roda
 /* 1. FONTES (@font-face) */
 @font-face {
     font-family: '178Grotesk';
-    src: url('fonts/178-grotesk-regular.otf') format('opentype');
+    src: url('assets/fonts/178-grotesk-regular.otf') format('opentype');
     font-weight: normal; 
     font-style: normal;
     font-display: swap;
@@ -41,7 +41,7 @@ Description: Layout 2/3 + 1/3, Ficha Técnica Animada Colada (0px), Logo no Roda
 
 @font-face {
     font-family: '178Grotesk';
-    src: url('fonts/178-grotesk-medium.otf') format('opentype');
+    src: url('assets/fonts/178-grotesk-medium.otf') format('opentype');
     font-weight: 500;
     font-style: normal;
     font-display: swap;
@@ -49,7 +49,7 @@ Description: Layout 2/3 + 1/3, Ficha Técnica Animada Colada (0px), Logo no Roda
 
 @font-face {
     font-family: '178Grotesk';
-    src: url('fonts/178-grotesk-semibold.otf') format('opentype');
+    src: url('assets/fonts/178-grotesk-semibold.otf') format('opentype');
     font-weight: bold; 
     font-style: normal;
     font-display: swap;
@@ -440,16 +440,18 @@ body, html {
 .snap-dot::after {
     content: '';
     display: block;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
+    width: 1px;         /* Linha ultrafina */
+    height: 12px;       /* Altura base */
     background-color: var(--cor-texto-inativo);
-    transition: background-color 0.3s ease, transform 0.3s ease;
+    opacity: 0.5;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
 .snap-dot.snap-dot--ativo::after {
+    height: 28px;       /* Estica verticalmente quando ativo */
     background-color: var(--cor-texto-forte);
-    transform: scale(1.3);
+    opacity: 1;
+    transform: none;    /* Removemos o 'scale' antigo */
 }
 
 .intro-overlay {
@@ -537,7 +539,48 @@ body, html {
 }
 
 /* ========================================================= */
-/* 11. SEÇÃO SOBRE (HOME PAGE) */
+/* 11. SEÇÃO CAPA (PÁGINA 0) - ALINHAMENTO DO TOPO AZUL      */
+/* ========================================================= */
+.secao-snap {
+    height: 100vh;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.capa-estatica {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 160px; 
+    padding-left: 80px;
+
+    box-sizing: border-box;
+}
+
+.capa-estatica .capa-imagem-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.img-capa-full {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+    object-position: center;
+}
+
+.capa-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+/* ========================================================= */
+/* 12. SEÇÃO SOBRE (HOME PAGE) */
 /* ========================================================= */
 .secao-sobre-home {
     width: 100%;
@@ -560,7 +603,7 @@ body, html {
 }
 
 /* ========================================================= */
-/* 11b. SEÇÕES PLACEHOLDER (HOME PAGE) */
+/* 12b. SEÇÕES PLACEHOLDER E YAYOI (HOME PAGE) */
 /* ========================================================= */
 .secao-placeholder-home {
     width: 100%;
@@ -624,8 +667,150 @@ body, html {
 .sobre-contato a { text-decoration: none; color: inherit; transition: color 0.3s ease; }
 .sobre-contato a:hover { color: var(--cor-texto-forte); }
 
+/* ========================================================= */
+/* 13. SEÇÃO YAYOI (GRÁFICO DE QUADRANTES)                   */
+/* ========================================================= */
+.secao-yayoi-home {
+    width: 100%;
+    height: 100vh;
+    background-color: var(--cor-bg-principal);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.yayoi-container {
+    width: 80%;
+    height: 70vh; /* Dá uma boa área respirável para o gráfico */
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.yayoi-header h2 {
+    font-size: 2rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--cor-texto-forte);
+    margin: 0;
+    line-height: 1;
+}
+
+.yayoi-header p {
+    font-size: 10px;
+    color: var(--cor-texto-mutado);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 5px;
+}
+
+/* O Quadro do Gráfico */
+.yayoi-grafico-area {
+    flex-grow: 1;
+    position: relative;
+    border: 1px solid rgba(0,0,0,0.05); /* Margem super suave */
+}
+
+/* Linhas dos Eixos (Cruz central) */
+.yayoi-eixo-x {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: rgba(0,0,0,0.1);
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.yayoi-eixo-y {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 1px;
+    height: 100%;
+    background-color: rgba(0,0,0,0.1);
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.yayoi-eixo-x span, .yayoi-eixo-y span {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--cor-texto-inativo);
+    background: var(--cor-bg-principal); /* Mascara a linha por trás da palavra */
+    padding: 2px 6px;
+}
+
+.yayoi-pontos-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* O Ponto de cada Projeto */
+.yayoi-ponto {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background-color: var(--cor-texto-forte);
+    border-radius: 50%;
+    /* Translada o centro exato da bolinha para a coordenada matemática */
+    transform: translate(-50%, 50%); 
+    cursor: pointer;
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), background-color 0.3s ease;
+    z-index: 10;
+}
+
+.yayoi-ponto:hover {
+    transform: translate(-50%, 50%) scale(2);
+    background-color: #ff3333; /* Fica vermelho forte ao passar o rato (Vibe Yayoi) */
+    z-index: 20;
+}
+
+/* Nome do Projeto a surgir no Hover */
+.yayoi-tooltip {
+    position: absolute;
+    bottom: 18px; /* Fica um pouco acima da bolinha */
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background: var(--cor-texto-forte);
+    color: var(--cor-bg-principal);
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 2px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    pointer-events: none;
+}
+
+.yayoi-ponto:hover .yayoi-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
 /* =========================================================================
-   12. ZOOM DE IMAGEM — barra lateral deslizante
+   13. ZOOM DE IMAGEM — barra lateral deslizante
    ========================================================================= */
 #barraZoom {
     position: fixed;
@@ -658,19 +843,19 @@ body, html {
     background-position: top left; 
 }
 
-/* Modo panorâmica (proporção muito larga) — preenche altura */
+/* Modo panorâmica */
 #barraZoom.bg-zoom--panorama::before {
     background-size: cover;
     background-position: center;
 }
 
-/* Modo normal (proporção equilibrada) — mantém 100% largura */
+/* Modo normal */
 #barraZoom.bg-zoom--normal::before {
     background-size: 100% auto;
     background-position: top left;
 }
 
-/* Modo muito vertical (proporção muito alta) — SEMPRE preencher com cover universal */
+/* Modo muito vertical */
 #barraZoom.bg-zoom--tall::before {
     background-size: cover;
     background-position: center;
@@ -703,7 +888,6 @@ body.is-zoom-active .conteudo-projeto img {
 /* 21. ALBUM DA SEMANA */
 /* ========================================================= */
 
-/* --- Seção base --- */
 .secao-album-home {
     width: 100%;
     height: 100vh;
@@ -716,7 +900,6 @@ body.is-zoom-active .conteudo-projeto img {
     overflow: hidden;
 }
 
-/* --- Container split --- */
 .album-container {
     width: 80%;
     display: flex;
@@ -730,7 +913,6 @@ body.is-zoom-active .conteudo-projeto img {
     font-size: 13px;
 }
 
-/* --- Capa quadrada --- */
 .album-capa-wrapper {
     flex-shrink: 0;
 }
@@ -750,7 +932,6 @@ body.is-zoom-active .conteudo-projeto img {
     display: block;
 }
 
-/* --- Coluna de informações --- */
 .album-info {
     flex: 1;
     min-width: 0;
@@ -759,7 +940,6 @@ body.is-zoom-active .conteudo-projeto img {
     gap: 16px;
 }
 
-/* --- Cabeçalho --- */
 .album-cabecalho {
     display: flex;
     flex-direction: column;
@@ -786,7 +966,6 @@ body.is-zoom-active .conteudo-projeto img {
     color: var(--cor-texto-inativo);
 }
 
-/* --- Player de áudio customizado --- */
 .album-player {
     display: flex;
     align-items: center;
@@ -847,7 +1026,6 @@ body.is-zoom-active .conteudo-projeto img {
     flex-shrink: 0;
 }
 
-/* --- Review --- */
 .album-review {
     font-size: 12px;
     line-height: 1.75;
@@ -868,7 +1046,6 @@ body.is-zoom-active .conteudo-projeto img {
     margin-bottom: 0 !important;
 }
 
-/* --- Tracklist --- */
 .album-tracklist {
     font-size: 11px;
 }
@@ -908,7 +1085,6 @@ body.is-zoom-active .conteudo-projeto img {
     font-weight: 500;
 }
 
-/* --- Links de streaming --- */
 .album-streaming {
     display: flex;
     gap: 14px;
@@ -928,7 +1104,6 @@ body.is-zoom-active .conteudo-projeto img {
     color: var(--cor-texto-forte);
 }
 
-/* --- Botão "Ver Arquivo" --- */
 .album-arquivo-btn {
     align-self: flex-start;
     background: none;
@@ -947,7 +1122,6 @@ body.is-zoom-active .conteudo-projeto img {
     color: var(--cor-texto-forte);
 }
 
-/* --- Overlay do arquivo histórico --- */
 .album-arquivo-overlay {
     position: fixed;
     inset: 0;
@@ -995,7 +1169,6 @@ body.is-zoom-active .conteudo-projeto img {
     gap: 28px;
 }
 
-/* --- Card do arquivo --- */
 .album-card {
     cursor: pointer;
 }
@@ -1036,4 +1209,3 @@ body.is-zoom-active .conteudo-projeto img {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-
