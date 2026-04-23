@@ -542,19 +542,26 @@ body, html {
 /* 11. SEÇÃO CAPA (PÁGINA 0) - ALINHAMENTO DO TOPO AZUL      */
 /* ========================================================= */
 .secao-snap {
-    height: 100vh;
     width: 100%;
+    height: 100vh;
     position: relative;
     overflow: hidden;
+    box-sizing: border-box;
+    
+    /* Margens Dinâmicas e Fixas */
+    padding-top: var(--home-img-offset, 180px) !important; 
+    padding-bottom: 40px !important;
+    padding-left: 90px !important;  /* <--- Fixado em 90px à esquerda */
+    padding-right: 0px !important;  /* <--- Removida a margem verde da direita */
 }
 
 .capa-estatica {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    padding-top: 160px; 
-    padding-left: 80px;
-
+    /* Retiramos o padding-top/left daqui porque a secao-snap já faz isso para a tela toda! */
+    width: 100%;
+    height: 100%;
     box-sizing: border-box;
 }
 
@@ -587,7 +594,6 @@ body, html {
     height: 100vh;
     background-color: var(--cor-bg-principal);
     display: flex;
-    justify-content: center;
     align-items: center;
     padding-top: 0 !important;
     box-sizing: border-box;
@@ -667,6 +673,42 @@ body, html {
 .sobre-contato a { text-decoration: none; color: inherit; transition: color 0.3s ease; }
 .sobre-contato a:hover { color: var(--cor-texto-forte); }
 
+/* =======================================================
+   12c. CAIXA DE SCROLL: NOSSA PRÁTICA (Invisível + Fade)
+   ======================================================= */
+
+.sobre-texto-scroll {
+    max-height: 40vh; /* Altura da janela de texto */
+    overflow-y: auto; 
+    margin-top: 1rem;
+    padding-right: 5px; /* Respiro mínimo */
+
+    /* 1. ESCONDER A BARRA DE ROLAGEM COMPLETAMENTE */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE e Edge */
+
+    /* 2. INDICADOR VISUAL: EFEITO FADE NO FINAL DO TEXTO */
+    /* Faz o texto ir ficando transparente nos últimos 20% da caixa */
+    -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+}
+
+/* Esconder barra no Chrome, Safari e Opera */
+.sobre-texto-scroll::-webkit-scrollbar {
+    display: none; 
+}
+
+/* Espaçamento entre os parágrafos gerados pelo WP */
+.sobre-texto-scroll p {
+    margin-bottom: 1.2rem;
+}
+
+/* Adicionamos uma margem extra no último parágrafo para que, 
+   ao chegar no final, o texto ultrapasse a zona do fade e fique 100% visível */
+.sobre-texto-scroll p:last-child {
+    margin-bottom: 3rem; 
+}
+
 /* ========================================================= */
 /* 13. SEÇÃO YAYOI (GRÁFICO DE QUADRANTES)                   */
 /* ========================================================= */
@@ -675,7 +717,6 @@ body, html {
     height: 100vh;
     background-color: var(--cor-bg-principal);
     display: flex;
-    justify-content: center;
     align-items: center;
     box-sizing: border-box;
     position: relative;
@@ -885,44 +926,50 @@ body.is-zoom-active .conteudo-projeto img {
 }
 
 /* ========================================================= */
-/* 21. ALBUM DA SEMANA */
+/* 21. ALBUM DA SEMANA (NOVO LAYOUT CROQUI)                  */
 /* ========================================================= */
 
 .secao-album-home {
-    width: 100%;
-    height: 100vh;
     background-color: var(--cor-bg-principal);
     display: flex;
+    align-items: stretch;
     justify-content: center;
-    align-items: center;
-    box-sizing: border-box;
-    position: relative;
-    overflow: hidden;
 }
 
-.album-container {
-    width: 80%;
+.album-grid-wrapper {
     display: flex;
-    gap: 48px;
-    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    /* Cálculo mágico: Pega a altura da tela, subtrai o topo dinâmico e o rodapé para nada vazar do ecrã */
+    max-height: calc(100vh - var(--home-img-offset, 180px) - 80px); 
+    gap: 40px; 
 }
 
-.album-vazio {
-    justify-content: center;
-    color: var(--cor-texto-inativo);
-    font-size: 13px;
+/* --- LINHA SUPERIOR (Capa + Info) --- */
+.album-top-row {
+    display: flex;
+    flex-direction: row;
+    gap: 30px; /* Ajuste o espaço entre a capa e os textos aqui */
+    flex: 1; 
+    min-height: 0; 
 }
 
-.album-capa-wrapper {
-    flex-shrink: 0;
+/* CAIXA AZUL (Capa) */
+.album-col-capa {
+    flex: 0 0 auto; /* Mantém a capa no tamanho exato, sem esticar */
+    height: 100%;
+    display: flex;
+    align-items: flex-start;
 }
 
 .album-capa-disco {
-    width: clamp(140px, 18vw, 260px);
+    width: clamp(200px, 22vw, 320px); 
     aspect-ratio: 1;
     border-radius: 4px;
-    overflow: hidden;
     box-shadow: 0 6px 40px rgba(0,0,0,0.12);
+    overflow: hidden;
+    flex-shrink: 0;
 }
 
 .album-capa-disco img {
@@ -932,15 +979,17 @@ body.is-zoom-active .conteudo-projeto img {
     display: block;
 }
 
-.album-info {
+/* CAIXAS VERDE E LARANJA (Info) */
+.album-col-info {
     flex: 1;
-    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    min-height: 0;
+    gap: 15px;
 }
 
-.album-cabecalho {
+/* Cabeçalho */
+.album-cabecalho-novo {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -953,23 +1002,21 @@ body.is-zoom-active .conteudo-projeto img {
     text-transform: uppercase;
 }
 
-.album-titulo {
-    font-size: clamp(16px, 2vw, 24px);
+.album-titulo-novo {
+    font-size: clamp(20px, 2.5vw, 32px);
     font-weight: 700;
-    margin: 0;
-    line-height: 1.2;
+    line-height: 1.1;
     color: var(--cor-texto-forte);
+    margin: 0;
 }
 
-.album-meta {
-    font-size: 11px;
-    color: var(--cor-texto-inativo);
-}
-
-.album-player {
+/* Player */
+.album-player-novo {
     display: flex;
     align-items: center;
     gap: 12px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--cor-texto-claro);
 }
 
 .album-play-btn {
@@ -1026,17 +1073,51 @@ body.is-zoom-active .conteudo-projeto img {
     flex-shrink: 0;
 }
 
+/* Caixa Laranja de Scroll (Review e Streaming) */
+.album-caixa-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--cor-texto-claro) transparent;
+}
+
+.album-caixa-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.album-caixa-scroll::-webkit-scrollbar-thumb {
+    background-color: var(--cor-texto-claro);
+    border-radius: 4px;
+}
+
+/* Faixa em Destaque Minimalista */
+.album-faixa-selecionada {
+    font-size: 11px;
+    color: var(--cor-texto-forte);
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--cor-texto-claro);
+    margin-bottom: 5px;
+}
+
+.faixa-label {
+    color: var(--cor-texto-inativo);
+    letter-spacing: 2px;
+    margin-right: 8px;
+}
+
+.faixa-nome {
+    font-weight: bold;
+}
+
 .album-review {
     font-size: 12px;
     line-height: 1.75;
     color: var(--cor-texto-forte);
-    max-height: 110px;
-    overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
 }
-
-.album-review::-webkit-scrollbar { display: none; }
 
 .album-review p {
     margin-bottom: 10px !important;
@@ -1044,45 +1125,6 @@ body.is-zoom-active .conteudo-projeto img {
 
 .album-review p:last-child {
     margin-bottom: 0 !important;
-}
-
-.album-tracklist {
-    font-size: 11px;
-}
-
-.album-tracklist summary {
-    letter-spacing: 2px;
-    cursor: pointer;
-    color: var(--cor-texto-inativo);
-    list-style: none;
-    user-select: none;
-}
-
-.album-tracklist summary::-webkit-details-marker { display: none; }
-
-.album-tracklist summary::after {
-    content: ' \25be';
-}
-
-.album-tracklist[open] summary::after {
-    content: ' \25b4';
-}
-
-.album-tracklist ol {
-    margin: 8px 0 0 0 !important;
-    padding: 0 0 0 18px !important;
-    color: var(--cor-texto-inativo);
-    line-height: 2;
-}
-
-.album-tracklist li {
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-.album-tracklist li.faixa-destaque {
-    color: var(--cor-texto-forte);
-    font-weight: 500;
 }
 
 .album-streaming {
@@ -1104,108 +1146,67 @@ body.is-zoom-active .conteudo-projeto img {
     color: var(--cor-texto-forte);
 }
 
-.album-arquivo-btn {
-    align-self: flex-start;
-    background: none;
-    border: none;
-    font-family: var(--fonte-primaria);
-    font-size: 10px;
-    letter-spacing: 2px;
-    cursor: pointer;
-    color: var(--cor-texto-inativo);
-    padding: 0;
-    transition: color 0.2s;
-    text-transform: uppercase;
+/* --- LINHA INFERIOR (Slider de Capas Quadradas) --- */
+.album-bottom-row {
+    height: 90px; /* Altura fixa das miniaturas na base */
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-shrink: 0;
+    border-top: 1px solid var(--cor-texto-claro); 
+    padding-top: 20px;
 }
 
-.album-arquivo-btn:hover {
-    color: var(--cor-texto-forte);
-}
-
-.album-arquivo-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 9998;
-    background: var(--cor-bg-principal);
-    overflow-y: auto;
-    padding: 80px 10%;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-    box-sizing: border-box;
-    scrollbar-width: none;
-}
-
-.album-arquivo-overlay::-webkit-scrollbar { display: none; }
-
-.album-arquivo-overlay.visivel {
-    opacity: 1;
-    pointer-events: all;
-}
-
-.album-arquivo-fechar {
-    position: fixed;
-    top: 24px;
-    right: 40px;
+.slider-btn {
     background: none;
     border: none;
     font-size: 20px;
-    cursor: pointer;
-    color: var(--cor-texto-forte);
-    z-index: 1;
-    padding: 0;
-    line-height: 1;
-    font-family: var(--fonte-primaria);
-    transition: color 0.2s;
-}
-
-.album-arquivo-fechar:hover {
     color: var(--cor-texto-inativo);
-}
-
-.album-arquivo-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 28px;
-}
-
-.album-card {
     cursor: pointer;
+    transition: color 0.3s ease;
+    padding: 0;
 }
 
-.album-card-capa {
-    aspect-ratio: 1;
-    border-radius: 50%;
+.slider-btn:hover {
+    color: var(--cor-texto-forte);
+}
+
+.album-slider-arquivos {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory; /* Faz travar na capa ao fazer scroll horizontal */
+    scrollbar-width: none;
+    flex: 1;
+    height: 100%;
+}
+
+.album-slider-arquivos::-webkit-scrollbar { 
+    display: none; 
+}
+
+.album-card-mini {
+    height: 100%;
+    aspect-ratio: 1; /* Força os quadrados perfeitos */
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    cursor: pointer;
+    transition: transform 0.3s ease, filter 0.3s ease;
+    filter: grayscale(100%); /* Efeito elegante: todas cinza */
+    opacity: 0.6;
+    border-radius: 2px;
     overflow: hidden;
-    margin-bottom: 10px;
-    transition: transform 0.25s ease;
 }
 
-.album-card:hover .album-card-capa {
+.album-card-mini:hover {
     transform: scale(1.05);
+    filter: grayscale(0%); /* Ganham cor ao passar o rato */
+    opacity: 1;
 }
 
-.album-card-capa img {
+.album-card-mini img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
-}
-
-.album-card-titulo {
-    font-size: 11px;
-    font-weight: 700;
-    margin-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--cor-texto-forte);
-}
-
-.album-card-artista {
-    font-size: 10px;
-    color: var(--cor-texto-inativo);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }

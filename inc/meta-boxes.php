@@ -198,3 +198,43 @@ function tiete_salvar_dados_yayoi($post_id) {
         delete_post_meta($post_id, 'yayoi_eixo_y');
     }
 }
+
+// ========================================================================= //
+// 📄 META BOX: TRADUÇÃO DE PÁGINAS (SOBRE)
+// ========================================================================= //
+add_action('add_meta_boxes', 'tiete_adicionar_meta_box_paginas');
+function tiete_adicionar_meta_box_paginas() {
+    add_meta_box(
+        'pagina_traducao_en',
+        '🌐 Tradução do Conteúdo (Inglês)',
+        'tiete_renderizar_meta_box_paginas',
+        'page', // Aparece apenas em Páginas
+        'normal',
+        'high'
+    );
+}
+
+function tiete_renderizar_meta_box_paginas($post) {
+    wp_nonce_field('salvar_pagina_nonce', 'pagina_nonce_campo');
+    $texto_en = get_post_meta($post->ID, 'conteudo_en', true);
+    
+    echo '<p>Escreva aqui a versão em inglês do texto principal desta página.</p>';
+    
+    // Gera o editor de texto rico do próprio WordPress
+    wp_editor($texto_en, 'conteudo_en', [
+        'textarea_rows' => 12,
+        'media_buttons' => false,
+        'teeny'         => true
+    ]);
+}
+
+add_action('save_post_page', 'tiete_salvar_pagina_traducao');
+function tiete_salvar_pagina_traducao($post_id) {
+    if (!isset($_POST['pagina_nonce_campo']) || !wp_verify_nonce($_POST['pagina_nonce_campo'], 'salvar_pagina_nonce')) return;
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    if (!current_user_can('edit_page', $post_id)) return;
+
+    if (isset($_POST['conteudo_en'])) {
+        update_post_meta($post_id, 'conteudo_en', wp_kses_post($_POST['conteudo_en']));
+    }
+}

@@ -86,7 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const easeInOutQuint = (t) => t < 0.5 ? 16 * t * t * t * t * t : 1 - Math.pow(-2 * t + 2, 5) / 2;
     let isZoomAnimating = false;
 
-    // FIX 2: recebe flag isTransitioning para evitar lenis.resize() durante transição entre zooms
     function snapSairDoZoom(isTransitioning = false) {
         if (!zoomAtivo || isZoomAnimating) return;
 
@@ -106,8 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
         isZoomAnimating = false;
         lenis.start();
 
-        // FIX 2: só recalcula o scroll quando saindo do zoom definitivamente,
-        // não quando está transitando para outra imagem (evita o salto de posição)
         if (!isTransitioning) {
             lenis.resize();
         }
@@ -173,7 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function ativarZoom(img) {
         if (!img || isZoomAnimating) return;
 
-        // FIX 2: passa isTransitioning=true para evitar lenis.resize() durante a troca
         if (zoomAtivo) {
             transitandoZoom = true;
             snapSairDoZoom(true);
@@ -195,9 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (barWidth < 0) return;
 
-        // FIX 1: imagem pequena (sem espaço real para barra) → só scroll para o topo,
-        // sem entrar no estado de zoom. Evita zoomAtivo=true com barWidthAtual=0,
-        // que impedia o guard de scroll de disparar e causava o salto ao clicar a próxima imagem.
         if (barWidth < 20) {
             transitandoZoom = false;
             lenis.scrollTo(lenis.scroll + startY, {
@@ -232,7 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const img = imagemZoomAtual;
 
-        // FIX 3: guard contra imagemZoomAtual null (race condition defensivo)
         if (!img) {
             snapSairDoZoom();
             return;
@@ -339,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isCarregando) return;
 
         limparTimers();
-        snapSairDoZoom(); // isTransitioning=false → chama lenis.resize() normalmente
+        snapSairDoZoom(); 
         isCarregando = true;
 
         try {
@@ -695,9 +687,6 @@ document.addEventListener('DOMContentLoaded', () => {
         snapParaSecaoHome(deltaY);
     }, { passive: true });
 
-    // =========================================================================
-    // CLIQUE NOS DOTS DE NAVEGAÇÃO
-    // =========================================================================
     if (indicator) {
         indicator.addEventListener('click', (e) => {
             const dot = e.target.closest('.snap-dot');
@@ -707,16 +696,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================================
-    // SCROLL — revelação e indicadores
-    // =========================================================================
-    // =========================================================================
-    // ALBUM DA SEMANA
+    // ALBUM DA SEMANA (NOVA LÓGICA DE CARROSSEL)
     // =========================================================================
 
     function inicializarAlbum() {
         if (!document.getElementById('secaoAlbum')) return;
         inicializarPlayerAudio();
-        inicializarArquivo();
+        inicializarCarrosselArquivo(); // Substituiu o antigo inicializarArquivo()
     }
 
     function inicializarPlayerAudio() {
@@ -779,51 +765,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function inicializarArquivo() {
-        const btnAbrir  = document.getElementById('albumArquivoBtn');
-        const overlay   = document.getElementById('albumArquivoOverlay');
-        const btnFechar = document.getElementById('albumArquivoFechar');
-        const grid      = document.getElementById('albumArquivoGrid');
-        if (!btnAbrir || !overlay || !grid) return;
+    // NOVA FUNÇÃO: Controla o carrossel horizontal de miniaturas da base
+    function inicializarCarrosselArquivo() {
+        const slider = document.querySelector('.album-slider-arquivos');
+        const btnPrev = document.querySelector('.btn-prev');
+        const btnNext = document.querySelector('.btn-next');
 
-        const arquivo = (typeof temaConfig !== 'undefined' && temaConfig.albumArquivo) ? temaConfig.albumArquivo : [];
-
-        if (arquivo.length > 0) {
-            grid.innerHTML = arquivo.map(a => `
-                <div class="album-card" data-id="${parseInt(a.id, 10)}">
-                    <div class="album-card-capa">
-                        <img src="${a.thumb_url}" alt="${String(a.titulo).replace(/"/g, '&quot;')}" loading="lazy">
-                    </div>
-                    <div class="album-card-titulo">${a.titulo}</div>
-                    <div class="album-card-artista">${a.artista} &middot; ${a.ano}</div>
-                </div>
-            `).join('');
-
-            grid.addEventListener('click', (e) => {
-                const card = e.target.closest('.album-card');
-                if (!card) return;
-                carregarAlbumAjax(parseInt(card.dataset.id, 10));
-                fecharArquivo();
+        if (slider && btnPrev && btnNext) {
+            // Lógica das setas de navegação
+            btnNext.addEventListener('click', () => {
+                slider.scrollBy({ left: 150, behavior: 'smooth' });
             });
-        } else {
-            grid.innerHTML = '<p style="color:var(--cor-texto-inativo);font-size:12px;">Nenhum álbum anterior.</p>';
+            btnPrev.addEventListener('click', () => {
+                slider.scrollBy({ left: -150, behavior: 'smooth' });
+            });
+
+            // Lógica de clique na miniatura usando Delegação de Eventos
+            slider.addEventListener('click', (e) => {
+                const miniCard = e.target.closest('.album-card-mini');
+                if (!miniCard) return;
+                
+                const albumId = parseInt(miniCard.dataset.id, 10);
+                if (albumId) {
+                    carregarAlbumAjax(albumId);
+                }
+            });
         }
-
-        const fecharArquivo = () => {
-            overlay.classList.remove('visivel');
-            overlay.setAttribute('aria-hidden', 'true');
-        };
-
-        btnAbrir.addEventListener('click', () => {
-            overlay.classList.add('visivel');
-            overlay.setAttribute('aria-hidden', 'false');
-        });
-
-        btnFechar.addEventListener('click', fecharArquivo);
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && overlay.classList.contains('visivel')) fecharArquivo();
-        });
     }
 
     function carregarAlbumAjax(id) {
@@ -837,47 +804,51 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function atualizarDomAlbum(data) {
-        // Capa
+        // 1. Atualizar Capa Grande
         const img = document.querySelector('#albumDisc img');
         if (img) { img.src = data.cover_url || ''; img.alt = data.titulo || ''; }
 
-        // Player — parar e trocar src
+        // 2. Atualizar Player de Áudio
         const audio    = document.getElementById('albumAudio');
         const playBtn  = document.getElementById('albumPlayBtn');
         const fill     = document.getElementById('albumProgressFill');
         const tempo    = document.getElementById('albumTempo');
         const playerEl = document.getElementById('albumPlayer');
+        
         if (audio)    { audio.pause(); audio.src = data.audio_url || ''; }
         if (playBtn)  { playBtn.classList.remove('tocando'); playBtn.setAttribute('aria-label', 'Tocar'); playBtn.disabled = !data.audio_url; }
         if (fill)     fill.style.width = '0';
         if (tempo)    tempo.textContent = data.audio_url ? '0:00' : '—';
         if (playerEl) playerEl.dataset.src = data.audio_url || '';
 
-        // Textos
-        const artista = document.querySelector('.album-artista');
-        const titulo  = document.querySelector('.album-titulo');
-        const meta    = document.querySelector('.album-meta');
-        if (artista) artista.textContent = data.artista || '';
-        if (titulo)  titulo.textContent  = data.titulo  || '';
-        if (meta)    meta.textContent    = [data.ano, data.genero].filter(Boolean).join(' · ');
+        // 3. Atualizar Textos (Novo Layout Agrupado)
+        const artistaEl = document.querySelector('.album-artista');
+        const tituloEl  = document.querySelector('.album-titulo-novo'); // Note a nova classe aqui
+        
+        if (artistaEl) {
+            artistaEl.textContent = data.artista + (data.ano ? ', ' + data.ano : '');
+        }
+        if (tituloEl) {
+            tituloEl.textContent = data.titulo || '';
+        }
 
-        // Review
+        // 4. Atualizar Review
         const review = document.getElementById('albumReview');
         if (review) review.innerHTML = data.review_html || '';
 
-        // Tracklist — faixa_destaque highlighted via CSS class
-        const ol = document.querySelector('#albumTracklist ol');
-        if (ol) {
-            const hintNorm = (data.faixa_destaque || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-            ol.innerHTML = (data.tracklist || []).map(t => {
-                const tNorm = t.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const destaque = hintNorm && tNorm &&
-                    (tNorm.includes(hintNorm) || hintNorm.includes(tNorm));
-                return `<li${destaque ? ' class="faixa-destaque"' : ''}>${t}</li>`;
-            }).join('');
+        // 5. Atualizar Faixa Destaque (Nova Lógica que substituiu a Tracklist)
+        const faixaNomeEl = document.querySelector('.faixa-nome');
+        const faixaContainer = document.querySelector('.album-faixa-selecionada');
+        
+        if (data.faixa_destaque) {
+            if (faixaNomeEl) faixaNomeEl.textContent = data.faixa_destaque;
+            if (faixaContainer) faixaContainer.style.display = 'block';
+        } else {
+            // Se não tiver faixa destaque, esconde a linha
+            if (faixaContainer) faixaContainer.style.display = 'none';
         }
 
-        // Streaming links
+        // 6. Atualizar Streaming links
         const streamingEl = document.getElementById('albumStreaming');
         if (streamingEl) {
             streamingEl.innerHTML = (data.streaming_links || [])
@@ -885,8 +856,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 .join('');
         }
 
-        // Re-extrai cor da nova capa
-        extrairCorCapa();
+        // 7. Extrair cor da nova capa (Se você usar essa função no seu tema)
+        if (typeof extrairCorCapa === 'function') {
+            extrairCorCapa();
+        }
     }
 
     function resetarInteracoes() {

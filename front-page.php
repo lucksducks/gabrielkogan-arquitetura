@@ -2,6 +2,18 @@
 <?php
 $lang = ( isset( $_GET['lang'] ) && $_GET['lang'] === 'en' ) ? 'en' : 'pt';
 $textos = tiete_get_dicionario($lang);
+
+$page_sobre = get_page_by_path('sobre'); 
+$texto_sobre_final = '';
+
+if ($page_sobre) {
+    if ($lang === 'en') {
+        $texto_en = get_post_meta($page_sobre->ID, 'conteudo_en', true);
+        $texto_sobre_final = wpautop($texto_en); 
+    } else {
+        $texto_sobre_final = apply_filters('the_content', $page_sobre->post_content);
+    }
+}
 ?>
 
 <div id="introOverlay" class="intro-overlay">
@@ -56,9 +68,13 @@ $textos = tiete_get_dicionario($lang);
         <div class="conteudo-sobre">
             <div class="sobre-texto">
                 <h2><?php echo esc_html( $textos['pratica_tit'] ); ?></h2>
-                <p><?php echo esc_html( $textos['pratica_p1'] ); ?></p>
-                <p><?php echo esc_html( $textos['pratica_p2'] ); ?></p>
+
+                <div class="sobre-texto-scroll">
+                    <?php echo $texto_sobre_final; ?>
+                </div>
+
             </div>
+            
             <div class="sobre-contato">
                 <h3><?php echo esc_html( $textos['contato'] ); ?></h3>
                 <p>
@@ -74,14 +90,12 @@ $textos = tiete_get_dicionario($lang);
     <section id="secaoYayoi" class="secao-yayoi-home secao-snap">
         <div class="yayoi-container">
             <div class="yayoi-header">
-                <h2>YAYOI</h2>
-                <p>Mapeamento Conceitual: Bruto vs Limpo / Privado vs Universal</p>
             </div>
 
             <div class="yayoi-grafico-area">
                 <div class="yayoi-eixo-x">
-                    <span class="label-esq">Bruto (Vermelho)</span>
-                    <span class="label-dir">Limpo (Branco)</span>
+                    <span class="label-esq">Vermelho</span>
+                    <span class="label-dir">Branco</span>
                 </div>
                 <div class="yayoi-eixo-y">
                     <span class="label-topo">Universal</span>
