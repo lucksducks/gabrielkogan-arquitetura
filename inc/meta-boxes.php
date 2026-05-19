@@ -7,7 +7,7 @@ add_action( 'add_meta_boxes', 'adicionar_caixa_dados_projeto' );
 function adicionar_caixa_dados_projeto() {
     add_meta_box( 
         'caixa_dados_projeto', 
-        'Dados Adicionais e Tradução (EN)', 
+        'Dados Adicionais e Traducao (EN/JP)', 
         'renderizar_caixa_dados_projeto', 
         'post', 
         'normal', 
@@ -20,8 +20,11 @@ function renderizar_caixa_dados_projeto( $post ) {
 
     $autoria_pt = get_post_meta( $post->ID, 'autoria_pt', true );
     $autoria_en = get_post_meta( $post->ID, 'autoria_en', true );
+    $autoria_ja = get_post_meta( $post->ID, 'autoria_ja', true );
     $titulo_en = get_post_meta( $post->ID, 'titulo_en', true );
+    $titulo_ja = get_post_meta( $post->ID, 'titulo_ja', true );
     $texto_en = get_post_meta( $post->ID, 'texto_en', true );
+    $texto_ja = get_post_meta( $post->ID, 'texto_ja', true );
 
     echo '<div style="display:flex; gap: 20px; margin-bottom: 20px;">';
         echo '<div style="flex: 1;">';
@@ -33,6 +36,11 @@ function renderizar_caixa_dados_projeto( $post ) {
         echo '<label for="autoria_en" style="display:block; margin-bottom:5px;"><strong>Autoria / Ano (EN):</strong><br><small>Use Enter para quebrar linha</small></label>';
         echo '<textarea id="autoria_en" name="autoria_en" rows="3" style="width:100%; padding:5px;">' . esc_textarea( $autoria_en ) . '</textarea>';
         echo '</div>';
+
+        echo '<div style="flex: 1;">';
+        echo '<label for="autoria_ja" style="display:block; margin-bottom:5px;"><strong>Autoria / Ano (JP):</strong><br><small>Use Enter para quebrar linha</small></label>';
+        echo '<textarea id="autoria_ja" name="autoria_ja" rows="3" style="width:100%; padding:5px;">' . esc_textarea( $autoria_ja ) . '</textarea>';
+        echo '</div>';
     echo '</div>';
 
     echo '<hr style="margin: 20px 0;">';
@@ -42,11 +50,27 @@ function renderizar_caixa_dados_projeto( $post ) {
     echo '<input type="text" id="titulo_en" name="titulo_en" value="' . esc_attr( $titulo_en ) . '" style="width:100%; max-width:400px; padding:5px;">';
     echo '</div>';
 
+    echo '<div style="margin-bottom: 15px;">';
+    echo '<label for="titulo_ja" style="display:block; margin-bottom:5px;"><strong>Titulo do Projeto em Japones:</strong></label>';
+    echo '<input type="text" id="titulo_ja" name="titulo_ja" value="' . esc_attr( $titulo_ja ) . '" style="width:100%; max-width:400px; padding:5px;">';
+    echo '</div>';
+
     echo '<div>';
     echo '<label style="display:block; margin-bottom:10px;"><strong>Texto em Inglês (Ficha Técnica / Descrição):</strong></label>';
     wp_editor( $texto_en, 'texto_en', array(
         'textarea_name' => 'texto_en',
         'media_buttons' => false, 
+        'textarea_rows' => 10,
+        'tinymce'       => true,
+        'quicktags'     => true
+    ));
+    echo '</div>';
+
+    echo '<div style="margin-top: 25px;">';
+    echo '<label style="display:block; margin-bottom:10px;"><strong>Texto em Japones (Ficha Tecnica / Descricao):</strong></label>';
+    wp_editor( $texto_ja, 'texto_ja', array(
+        'textarea_name' => 'texto_ja',
+        'media_buttons' => false,
         'textarea_rows' => 10,
         'tinymce'       => true,
         'quicktags'     => true
@@ -62,9 +86,12 @@ function salvar_dados_projeto_extra( $post_id ) {
 
     if ( isset( $_POST['autoria_pt'] ) ) update_post_meta( $post_id, 'autoria_pt', sanitize_textarea_field( $_POST['autoria_pt'] ) );
     if ( isset( $_POST['autoria_en'] ) ) update_post_meta( $post_id, 'autoria_en', sanitize_textarea_field( $_POST['autoria_en'] ) );
+    if ( isset( $_POST['autoria_ja'] ) ) update_post_meta( $post_id, 'autoria_ja', sanitize_textarea_field( $_POST['autoria_ja'] ) );
     
     if ( isset( $_POST['titulo_en'] ) ) update_post_meta( $post_id, 'titulo_en', sanitize_text_field( $_POST['titulo_en'] ) );
+    if ( isset( $_POST['titulo_ja'] ) ) update_post_meta( $post_id, 'titulo_ja', sanitize_text_field( $_POST['titulo_ja'] ) );
     if ( isset( $_POST['texto_en'] ) ) update_post_meta( $post_id, 'texto_en', wp_kses_post( $_POST['texto_en'] ) );
+    if ( isset( $_POST['texto_ja'] ) ) update_post_meta( $post_id, 'texto_ja', wp_kses_post( $_POST['texto_ja'] ) );
 }
 
 // =========================================================================
@@ -205,8 +232,8 @@ function tiete_salvar_dados_yayoi($post_id) {
 add_action('add_meta_boxes', 'tiete_adicionar_meta_box_paginas');
 function tiete_adicionar_meta_box_paginas() {
     add_meta_box(
-        'pagina_traducao_en',
-        '🌐 Tradução do Conteúdo (Inglês)',
+        'pagina_traducao_idiomas',
+        'Traducao do Conteudo (EN/JP)',
         'tiete_renderizar_meta_box_paginas',
         'page', // Aparece apenas em Páginas
         'normal',
@@ -217,11 +244,19 @@ function tiete_adicionar_meta_box_paginas() {
 function tiete_renderizar_meta_box_paginas($post) {
     wp_nonce_field('salvar_pagina_nonce', 'pagina_nonce_campo');
     $texto_en = get_post_meta($post->ID, 'conteudo_en', true);
+    $texto_ja = get_post_meta($post->ID, 'conteudo_ja', true);
     
-    echo '<p>Escreva aqui a versão em inglês do texto principal desta página.</p>';
+    echo '<p>Escreva aqui as versoes traduzidas do texto principal desta pagina.</p>';
     
-    // Gera o editor de texto rico do próprio WordPress
+    echo '<h3>Ingles</h3>';
     wp_editor($texto_en, 'conteudo_en', [
+        'textarea_rows' => 12,
+        'media_buttons' => false,
+        'teeny'         => true
+    ]);
+
+    echo '<h3 style="margin-top: 25px;">Japones</h3>';
+    wp_editor($texto_ja, 'conteudo_ja', [
         'textarea_rows' => 12,
         'media_buttons' => false,
         'teeny'         => true
@@ -236,5 +271,9 @@ function tiete_salvar_pagina_traducao($post_id) {
 
     if (isset($_POST['conteudo_en'])) {
         update_post_meta($post_id, 'conteudo_en', wp_kses_post($_POST['conteudo_en']));
+    }
+
+    if (isset($_POST['conteudo_ja'])) {
+        update_post_meta($post_id, 'conteudo_ja', wp_kses_post($_POST['conteudo_ja']));
     }
 }

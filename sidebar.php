@@ -1,8 +1,12 @@
 <?php
-$lang = ( isset( $_GET['lang'] ) && $_GET['lang'] === 'en' ) ? 'en' : 'pt';
+$lang = tiete_get_lang();
 $url_base = home_url('/');
 $textos = tiete_get_dicionario($lang);
-$link_toggle_lang = ( $lang === 'en' ) ? remove_query_arg('lang') : add_query_arg('lang', 'en');
+$idiomas_site = array(
+    'pt' => 'PT',
+    'en' => 'EN',
+    'ja' => 'JP',
+);
 $cat_slug = isset( $_GET['categoria'] ) ? sanitize_key( $_GET['categoria'] ) : '';
 
 $todos_projetos = new WP_Query( array('post_type' => 'post', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC', 'no_found_rows' => true) );
@@ -10,7 +14,7 @@ $todos_projetos = new WP_Query( array('post_type' => 'post', 'posts_per_page' =>
 
 <aside class="barra-fixa">
     <div class="navegacao-topo">
-        <?php $link_home_logo = ( $lang === 'en' ) ? add_query_arg( 'lang', 'en', $url_base ) : $url_base; ?>
+        <?php $link_home_logo = tiete_url_com_lang( $url_base, $lang ); ?>
         <a href="<?php echo esc_url( $link_home_logo ); ?>" class="bloco-texto-logo marca-topo-direito btn-home-ajax">
             <span class="nome-principal">GABRIEL KOGAN</span>
             <span class="subtitulo-arquitetura"><?php echo esc_html( $textos['arq_subtit'] ); ?></span>
@@ -21,7 +25,7 @@ $todos_projetos = new WP_Query( array('post_type' => 'post', 'posts_per_page' =>
                 <?php foreach ( $textos['filtros'] as $slug => $nome ) :
                     $classe_ativo = ( $cat_slug === $slug ) ? 'filtro-ativo' : '';
                     $link_filtro  = add_query_arg( 'categoria', $slug, $url_base );
-                    if ( $lang === 'en' ) $link_filtro = add_query_arg( 'lang', 'en', $link_filtro );
+                    $link_filtro = tiete_url_com_lang( $link_filtro, $lang );
                     ?>
                     <li>
                         <a href="<?php echo esc_url( $link_filtro ); ?>" class="<?php echo esc_attr( $classe_ativo ); ?>" data-slug="<?php echo esc_attr( $slug ); ?>">
@@ -30,22 +34,26 @@ $todos_projetos = new WP_Query( array('post_type' => 'post', 'posts_per_page' =>
                     </li>
                 <?php endforeach; ?>
                 <li><a href="https://tiete178lab.com" target="_blank" rel="noopener noreferrer" class="link-externo">TIETÊ178</a></li>
-                <li>
-                    <a href="<?php echo esc_url( $link_toggle_lang ); ?>" class="btn-idioma">
-                        <span style="color:<?php echo $lang === 'pt' ? '#7b7b7b' : '#b5b4af'; ?>;font-weight:<?php echo $lang === 'pt' ? 'bold' : 'normal'; ?>;">PT</span><span style="color:<?php echo $lang === 'en' ? '#7b7b7b' : '#b5b4af'; ?>;font-weight:<?php echo $lang === 'en' ? 'bold' : 'normal'; ?>;">EN</span>
-                    </a>
-                </li>
+                <?php foreach ( $idiomas_site as $codigo_idioma => $rotulo_idioma ) :
+                    $link_idioma = tiete_url_com_lang( remove_query_arg( 'lang' ), $codigo_idioma );
+                    ?>
+                    <li>
+                        <a href="<?php echo esc_url( $link_idioma ); ?>" class="btn-idioma" style="color:<?php echo $lang === $codigo_idioma ? '#7b7b7b' : '#b5b4af'; ?>;font-weight:<?php echo $lang === $codigo_idioma ? 'bold' : 'normal'; ?>;">
+                            <?php echo esc_html( $rotulo_idioma ); ?>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
             </ul>
         </nav>
     </div>
 
     <div class="container-dinamico-lateral">
         <?php if ( is_single() ) :
-            $titulo_custom   = get_post_meta( get_the_ID(), 'titulo_en', true );
-            $titulo_exibicao = ( $lang === 'en' && ! empty( $titulo_custom ) ) ? $titulo_custom : get_the_title();
+            $titulo_custom   = $lang !== 'pt' ? get_post_meta( get_the_ID(), 'titulo_' . $lang, true ) : '';
+            $titulo_exibicao = ! empty( $titulo_custom ) ? $titulo_custom : get_the_title();
             $autoria_pt      = get_post_meta( get_the_ID(), 'autoria_pt', true );
-            $autoria_en      = get_post_meta( get_the_ID(), 'autoria_en', true );
-            $autoria_exibicao = ( $lang === 'en' && ! empty( $autoria_en ) ) ? $autoria_en : $autoria_pt;
+            $autoria_traduzida = $lang !== 'pt' ? get_post_meta( get_the_ID(), 'autoria_' . $lang, true ) : '';
+            $autoria_exibicao = ! empty( $autoria_traduzida ) ? $autoria_traduzida : $autoria_pt;
         ?>
             <div class="ficha-tecnica">
                 <h1 class="titulo-projeto-destaque"><?php echo esc_html( $titulo_exibicao ); ?></h1>
@@ -55,9 +63,9 @@ $todos_projetos = new WP_Query( array('post_type' => 'post', 'posts_per_page' =>
                 <div class="texto-descricao-lateral">
                     <div class="texto-descricao-interno">
                         <?php
-                        $texto_en = get_post_meta( get_the_ID(), 'texto_en', true );
-                        if ( $lang === 'en' && ! empty( $texto_en ) ) {
-                            echo wpautop( $texto_en );
+                        $texto_traduzido = $lang !== 'pt' ? get_post_meta( get_the_ID(), 'texto_' . $lang, true ) : '';
+                        if ( ! empty( $texto_traduzido ) ) {
+                            echo wpautop( $texto_traduzido );
                         } else {
                             echo apply_filters('the_content', preg_replace('/<img\b[^>]*>/i', '', get_the_content()));
                         }
@@ -74,9 +82,9 @@ $todos_projetos = new WP_Query( array('post_type' => 'post', 'posts_per_page' =>
                         while ( $query_lista->have_posts() ) : $query_lista->the_post();
                             $link_projeto = get_permalink();
                             if ( $cat_slug ) $link_projeto = add_query_arg( 'categoria', $cat_slug, $link_projeto );
-                            if ( $lang === 'en' ) $link_projeto = add_query_arg( 'lang', 'en', $link_projeto );
-                            $tit_lista_en = get_post_meta( get_the_ID(), 'titulo_en', true );
-                            $tit_lista    = ( $lang === 'en' && ! empty( $tit_lista_en ) ) ? $tit_lista_en : get_the_title();
+                            $link_projeto = tiete_url_com_lang( $link_projeto, $lang );
+                            $tit_lista_traduzido = $lang !== 'pt' ? get_post_meta( get_the_ID(), 'titulo_' . $lang, true ) : '';
+                            $tit_lista    = ! empty( $tit_lista_traduzido ) ? $tit_lista_traduzido : get_the_title();
                             ?>
                             <li class="item-projeto" data-projeto-id="<?php echo get_the_ID(); ?>">
                                 <a href="<?php echo esc_url( $link_projeto ); ?>"><?php echo esc_html( $tit_lista ); ?></a>

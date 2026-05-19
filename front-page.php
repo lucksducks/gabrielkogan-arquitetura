@@ -1,15 +1,15 @@
 <?php get_header(); ?>
 <?php
-$lang = ( isset( $_GET['lang'] ) && $_GET['lang'] === 'en' ) ? 'en' : 'pt';
+$lang = tiete_get_lang();
 $textos = tiete_get_dicionario($lang);
 
 $page_sobre = get_page_by_path('sobre'); 
 $texto_sobre_final = '';
 
 if ($page_sobre) {
-    if ($lang === 'en') {
-        $texto_en = get_post_meta($page_sobre->ID, 'conteudo_en', true);
-        $texto_sobre_final = wpautop($texto_en); 
+    if ($lang !== 'pt') {
+        $texto_traduzido = get_post_meta($page_sobre->ID, 'conteudo_' . $lang, true);
+        $texto_sobre_final = ! empty($texto_traduzido) ? wpautop($texto_traduzido) : apply_filters('the_content', $page_sobre->post_content);
     } else {
         $texto_sobre_final = apply_filters('the_content', $page_sobre->post_content);
     }
@@ -21,23 +21,13 @@ if ($page_sobre) {
 </div>
 
 <nav class="snap-dots" id="scrollIndicator">
-    <button class="snap-dot snap-dot--ativo" data-index="0" aria-label="Capa"></button>
-    <button class="snap-dot" data-index="1" aria-label="Nossa Prática"></button>
-    <button class="snap-dot" data-index="2" aria-label="Yayoi"></button>
-    <button class="snap-dot" data-index="3" aria-label="Album da Semana"></button>
+    <button class="snap-dot snap-dot--ativo" data-index="0" aria-label="<?php echo esc_attr( $textos['capa'] ); ?>"></button>
+    <button class="snap-dot" data-index="1" aria-label="<?php echo esc_attr( $textos['pratica_tit'] ); ?>"></button>
+    <button class="snap-dot" data-index="2" aria-label="<?php echo esc_attr( $textos['yayoi'] ); ?>"></button>
+    <button class="snap-dot" data-index="3" aria-label="<?php echo esc_attr( $textos['album_semana'] ); ?>"></button>
 </nav>
 
 <main class="area-scroll" id="mainContent">
-    <div class="logo-watermark-box" id="logoEasterEgg" style="cursor: pointer;">
-        <div class="link-logo-vertical">
-            <img src="<?php echo esc_url( get_template_directory_uri() ); ?>/assets/img/logo.png" alt="Gabriel Kogan" class="img-logo-pequena">
-            <div class="bloco-texto-logo">
-                <span class="nome-principal">GABRIEL KOGAN</span>
-                <span class="subtitulo-arquitetura"><?php echo esc_html( $textos['arq_subtit'] ); ?></span>
-            </div>
-        </div>
-    </div>
-
     <div class="area-scroll-thumbs">
         <div id="prevHover">
             <?php
@@ -57,7 +47,7 @@ if ($page_sobre) {
     </div>
 
     <section id="secaoCapa" class="secao-snap capa-estatica">
-        <div class="capa-imagem-wrapper">
+        <div class="capa-imagem-wrapper home-step-frame">
             <img src="<?php echo esc_url( get_template_directory_uri() ); ?>/assets/img/home.png" alt="Gabriel Kogan Arquitetura" class="img-capa-full">
         </div>
     </section>
@@ -65,16 +55,16 @@ if ($page_sobre) {
     <div class="wrap-projetos" style="display: none;"></div>
 
     <section id="secaoSobre" class="secao-sobre-home secao-snap">
-        <div class="conteudo-sobre">
+        <div class="conteudo-sobre home-step-frame">
             <div class="sobre-texto">
                 <h2><?php echo esc_html( $textos['pratica_tit'] ); ?></h2>
 
-                <div class="sobre-texto-scroll">
+                <div class="sobre-texto-scroll" data-lenis-prevent>
                     <?php echo $texto_sobre_final; ?>
                 </div>
 
             </div>
-            
+
             <div class="sobre-contato">
                 <h3><?php echo esc_html( $textos['contato'] ); ?></h3>
                 <p>
@@ -88,18 +78,15 @@ if ($page_sobre) {
     </section>
     
     <section id="secaoYayoi" class="secao-yayoi-home secao-snap">
-        <div class="yayoi-container">
-            <div class="yayoi-header">
-            </div>
-
+        <div class="yayoi-container home-step-frame">
             <div class="yayoi-grafico-area">
                 <div class="yayoi-eixo-x">
-                    <span class="label-esq">Vermelho</span>
-                    <span class="label-dir">Branco</span>
+                    <span class="label-esq"><?php echo esc_html( $textos['vermelho'] ); ?></span>
+                    <span class="label-dir"><?php echo esc_html( $textos['branco'] ); ?></span>
                 </div>
                 <div class="yayoi-eixo-y">
-                    <span class="label-topo">Universal</span>
-                    <span class="label-base">Privado</span>
+                    <span class="label-topo"><?php echo esc_html( $textos['universal'] ); ?></span>
+                    <span class="label-base"><?php echo esc_html( $textos['privado'] ); ?></span>
                 </div>
 
                 <div class="yayoi-pontos-wrapper">
@@ -112,8 +99,9 @@ if ($page_sobre) {
 
                             // O PHP só desenha a "bolinha" se o projeto tiver o X e o Y definidos no painel
                             if ( $x !== '' && $y !== '' ) :
-                                $link_projeto = get_permalink();
-                                $titulo = get_the_title();
+                                $link_projeto = tiete_url_com_lang( get_permalink(), $lang );
+                                $titulo_traduzido = $lang !== 'pt' ? get_post_meta( get_the_ID(), 'titulo_' . $lang, true ) : '';
+                                $titulo = ! empty( $titulo_traduzido ) ? $titulo_traduzido : get_the_title();
                                 ?>
                                 <a href="<?php echo esc_url($link_projeto); ?>" 
                                    class="yayoi-ponto" 

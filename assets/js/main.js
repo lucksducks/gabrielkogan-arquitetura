@@ -14,6 +14,35 @@ document.addEventListener('DOMContentLoaded', () => {
         barraZoom.style.backgroundImage = `url('${bgZoomUrl}')`;
     }
 
+    const globalAudio = new Audio();
+    const SVG_PLAY  = '<svg viewBox="0 0 10 10" width="10" height="10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>';
+    const SVG_PAUSE = '<svg viewBox="0 0 10 10" width="10" height="10" fill="currentColor"><rect x="1.5" y="1" width="2.5" height="8"/><rect x="6" y="1" width="2.5" height="8"/></svg>';
+
+    // Atualiza a barra de progresso sempre que o áudio avançar (se a barra existir na tela)
+    globalAudio.addEventListener('timeupdate', () => {
+        if (!globalAudio.duration) return;
+        const fill = document.getElementById('albumProgressFill');
+        const tempo = document.getElementById('albumTempo');
+        if (fill && tempo) {
+            fill.style.width = (globalAudio.currentTime / globalAudio.duration * 100) + '%';
+            const s = Math.floor(globalAudio.currentTime);
+            tempo.textContent = `${~~(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+        }
+    });
+
+    // Reseta a interface quando a música acaba
+    globalAudio.addEventListener('ended', () => {
+        const playBtn = document.getElementById('albumPlayBtn');
+        const fill = document.getElementById('albumProgressFill');
+        const tempo = document.getElementById('albumTempo');
+        if (playBtn) {
+            playBtn.innerHTML = SVG_PLAY;
+            playBtn.classList.remove('tocando');
+        }
+        if (fill) fill.style.width = '0';
+        if (tempo) tempo.textContent = '0:00';
+    });
+
     // ⭐ Atualiza a imagem de fundo do barraZoom ao trocar de projeto (AJAX)
     function atualizarBgZoomDinamico() {
         const barraZoom = document.getElementById('barraZoom');
@@ -286,6 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     // HOVER PREVIEW
     // =========================================================================
+    
     document.addEventListener('mouseover', (e) => {
         const item = e.target.closest('.item-projeto');
         if (!item || item.classList.contains('projeto-ativo')) return;
@@ -385,6 +415,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 area.innerHTML          = doc.querySelector('#mainContent').innerHTML;
                 document.body.className = doc.body.className;
                 lenis.resize();
+
+                if (document.body.classList.contains('home')) {
+                    inicializarAlbum();
+                }
             }
 
             const docNavLista = doc.querySelector('.menu-projetos');
@@ -663,25 +697,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     area.addEventListener('wheel', (e) => {
         if (!document.body.classList.contains('home') || zoomAtivo) return;
+
+        // 🟢 ZONA LIVRE DE SCROLL: Verifica se o scroll está dentro da nossa caixa de texto
+        const scrollBox = e.target.closest('.sobre-texto-scroll');
+        if (scrollBox) {
+            const isScrollingDown = e.deltaY > 0;
+            const isScrollingUp = e.deltaY < 0;
+            // +1px de tolerância para evitar bugs de arredondamento em monitores Retina
+            const isAtTop = scrollBox.scrollTop <= 0;
+            const isAtBottom = (scrollBox.scrollHeight - scrollBox.scrollTop) <= (scrollBox.clientHeight + 1);
+
+            // Se houver texto para ler (não bateu no topo/fundo), nós abortamos a função do SNAP
+            // e deixamos o navegador rolar o texto naturalmente!
+            if ((isScrollingDown && !isAtBottom) || (isScrollingUp && !isAtTop)) {
+                e.stopPropagation();
+                return; 
+            }
+        }
+
+        // Se chegou aqui, faz o SNAP normal pulando de seção
         e.preventDefault();
         e.stopPropagation();
         snapParaSecaoHome(e.deltaY);
     }, { passive: false, capture: true });
 
     let touchStartY = 0;
+    let isTouchInScrollBox = false; // Flag para rastrear o dedo no celular
 
     area.addEventListener('touchstart', (e) => {
         if (!document.body.classList.contains('home') || zoomAtivo) return;
         touchStartY = e.touches[0].clientY;
+        
+        isTouchInScrollBox = !!e.target.closest('.sobre-texto-scroll');
     }, { passive: true });
 
     area.addEventListener('touchmove', (e) => {
         if (!document.body.classList.contains('home') || zoomAtivo) return;
+        
+        if (isTouchInScrollBox) return;
+
         e.preventDefault();
     }, { passive: false });
 
     area.addEventListener('touchend', (e) => {
         if (!document.body.classList.contains('home') || zoomAtivo) return;
+        
+        if (isTouchInScrollBox) return;
+
         const deltaY = touchStartY - e.changedTouches[0].clientY;
         if (Math.abs(deltaY) < 40) return;
         snapParaSecaoHome(deltaY);
@@ -709,59 +771,52 @@ document.addEventListener('DOMContentLoaded', () => {
         const playerEl = document.getElementById('albumPlayer');
         if (!playerEl) return;
 
-        const audio   = document.getElementById('albumAudio');
         const playBtn = document.getElementById('albumPlayBtn');
-        const fill    = document.getElementById('albumProgressFill');
         const track   = document.getElementById('albumProgressTrack');
-        const tempo   = document.getElementById('albumTempo');
-
-        const SVG_PLAY  = '<svg viewBox="0 0 10 10" width="10" height="10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>';
-        const SVG_PAUSE = '<svg viewBox="0 0 10 10" width="10" height="10" fill="currentColor"><rect x="1.5" y="1" width="2.5" height="8"/><rect x="6" y="1" width="2.5" height="8"/></svg>';
-
         const src = playerEl.dataset.src || '';
-        if (src) audio.src = src;
 
+        // Se o utilizador abriu um disco diferente, trocamos o som. Se for o mesmo, deixamos tocar!
+        if (src && !globalAudio.src.endsWith(src)) {
+            globalAudio.src = src;
+        }
+
+        // Sincroniza o botão de Play/Pause caso a música já esteja tocando em background
+        if (!globalAudio.paused && globalAudio.currentTime > 0) {
+            playBtn.innerHTML = SVG_PAUSE;
+            playBtn.setAttribute('aria-label', 'Pausar');
+            playBtn.classList.add('tocando');
+        } else {
+            playBtn.innerHTML = SVG_PLAY;
+            playBtn.setAttribute('aria-label', 'Tocar');
+            playBtn.classList.remove('tocando');
+        }
+
+        // Botão Play/Pause
         playBtn.addEventListener('click', () => {
-            if (!audio.src || audio.src === window.location.href) return;
-            if (audio.paused) {
-                playBtn.textContent = '…';
-                audio.play()
-                    .then(() => {
-                        playBtn.innerHTML = SVG_PAUSE;
-                        playBtn.setAttribute('aria-label', 'Pausar');
-                        playBtn.classList.add('tocando');
-                    })
-                    .catch((err) => {
-                        console.error('[Album player]', err);
-                        playBtn.innerHTML = SVG_PLAY;
-                        tempo.textContent = 'erro';
-                    });
+            if (!globalAudio.src) return;
+            if (globalAudio.paused) {
+                playBtn.textContent = '…'; // Feedback de loading
+                globalAudio.play().then(() => {
+                    playBtn.innerHTML = SVG_PAUSE;
+                    playBtn.setAttribute('aria-label', 'Pausar');
+                    playBtn.classList.add('tocando');
+                }).catch((err) => {
+                    console.error('[Album player]', err);
+                    playBtn.innerHTML = SVG_PLAY;
+                });
             } else {
-                audio.pause();
+                globalAudio.pause();
                 playBtn.innerHTML = SVG_PLAY;
                 playBtn.setAttribute('aria-label', 'Tocar');
                 playBtn.classList.remove('tocando');
             }
         });
 
-        audio.addEventListener('timeupdate', () => {
-            if (!audio.duration) return;
-            fill.style.width = (audio.currentTime / audio.duration * 100) + '%';
-            const s = Math.floor(audio.currentTime);
-            tempo.textContent = `${~~(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-        });
-
+        // Clique na barra de progresso
         track.addEventListener('click', (e) => {
-            if (!audio.duration) return;
+            if (!globalAudio.duration) return;
             const rect = track.getBoundingClientRect();
-            audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
-        });
-
-        audio.addEventListener('ended', () => {
-            playBtn.innerHTML = SVG_PLAY;
-            playBtn.classList.remove('tocando');
-            fill.style.width = '0';
-            tempo.textContent = '0:00';
+            globalAudio.currentTime = ((e.clientX - rect.left) / rect.width) * globalAudio.duration;
         });
     }
 
@@ -808,22 +863,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const img = document.querySelector('#albumDisc img');
         if (img) { img.src = data.cover_url || ''; img.alt = data.titulo || ''; }
 
-        // 2. Atualizar Player de Áudio
-        const audio    = document.getElementById('albumAudio');
+        // 2. Atualizar Player de Áudio (Agora usando o Global)
         const playBtn  = document.getElementById('albumPlayBtn');
         const fill     = document.getElementById('albumProgressFill');
         const tempo    = document.getElementById('albumTempo');
         const playerEl = document.getElementById('albumPlayer');
         
-        if (audio)    { audio.pause(); audio.src = data.audio_url || ''; }
-        if (playBtn)  { playBtn.classList.remove('tocando'); playBtn.setAttribute('aria-label', 'Tocar'); playBtn.disabled = !data.audio_url; }
+        if (globalAudio) {
+            globalAudio.pause();
+            globalAudio.src = data.audio_url || '';
+        }
+        
+        if (playBtn)  { 
+            playBtn.innerHTML = SVG_PLAY;
+            playBtn.classList.remove('tocando'); 
+            playBtn.setAttribute('aria-label', 'Tocar'); 
+            playBtn.disabled = !data.audio_url; 
+        }
         if (fill)     fill.style.width = '0';
         if (tempo)    tempo.textContent = data.audio_url ? '0:00' : '—';
         if (playerEl) playerEl.dataset.src = data.audio_url || '';
 
         // 3. Atualizar Textos (Novo Layout Agrupado)
         const artistaEl = document.querySelector('.album-artista');
-        const tituloEl  = document.querySelector('.album-titulo-novo'); // Note a nova classe aqui
+        const tituloEl  = document.querySelector('.album-titulo-novo'); 
         
         if (artistaEl) {
             artistaEl.textContent = data.artista + (data.ano ? ', ' + data.ano : '');
@@ -844,7 +907,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (faixaNomeEl) faixaNomeEl.textContent = data.faixa_destaque;
             if (faixaContainer) faixaContainer.style.display = 'block';
         } else {
-            // Se não tiver faixa destaque, esconde a linha
             if (faixaContainer) faixaContainer.style.display = 'none';
         }
 
@@ -856,7 +918,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .join('');
         }
 
-        // 7. Extrair cor da nova capa (Se você usar essa função no seu tema)
+        // 7. Extrair cor da nova capa 
         if (typeof extrairCorCapa === 'function') {
             extrairCorCapa();
         }

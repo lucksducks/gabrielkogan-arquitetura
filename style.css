@@ -28,6 +28,12 @@ Description: Layout 2/3 + 1/3, Ficha Técnica Animada Colada (0px), Logo no Roda
     /* Layout Base */
     --largura-esq: 60%;
     --largura-dir: 40%;
+    --home-frame-top: clamp(170px, 19.75vh, 210px);
+    --home-frame-right: 0px;
+    --home-frame-bottom: 40px;
+    --home-frame-left: 90px;
+    --home-frame-readable-width: min(80%, 720px);
+    --home-sidebar-nav-top: 70px;
 }
 
 /* 1. FONTES (@font-face) */
@@ -92,7 +98,7 @@ body, html {
 
 /* 4. ALINHAMENTO DE HORIZONTE E HOME CENTRALIZADA */
 .home .area-scroll {
-    display: block; 
+    display: block;
 }
 
 .wrap-projetos {
@@ -156,6 +162,12 @@ body, html {
     justify-content: flex-start;
     position: relative; 
     z-index: 10;
+}
+
+.home .barra-fixa {
+    display: grid;
+    grid-template-rows: var(--home-frame-top) minmax(0, 1fr);
+    padding: 0 60px var(--home-frame-bottom);
 }
 
 /* ========================================================= */
@@ -246,6 +258,12 @@ body, html {
     margin-top: -30px;
 }
 
+.home .navegacao-topo {
+    align-self: start;
+    margin-top: 0;
+    padding-top: var(--home-sidebar-nav-top);
+}
+
 .marca-topo-direito {
     flex-direction: row; 
     align-items: baseline; 
@@ -329,6 +347,10 @@ body, html {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    min-height: 0;
+}
+
+.home .container-dinamico-lateral {
     min-height: 0;
 }
 
@@ -544,21 +566,39 @@ body, html {
 .secao-snap {
     width: 100%;
     height: 100vh;
+    min-height: 100vh;
     position: relative;
     overflow: hidden;
     box-sizing: border-box;
+    display: grid;
+    align-items: start;
+    justify-items: stretch;
     
     /* Margens Dinâmicas e Fixas */
-    padding-top: var(--home-img-offset, 180px) !important; 
-    padding-bottom: 40px !important;
+    padding-top: var(--home-frame-top) !important;
+    padding-bottom: var(--home-frame-bottom) !important;
     padding-left: 90px !important;  /* <--- Fixado em 90px à esquerda */
     padding-right: 0px !important;  /* <--- Removida a margem verde da direita */
 }
 
+.home .secao-snap {
+    padding-top: var(--home-frame-top) !important;
+    padding-right: var(--home-frame-right) !important;
+    padding-bottom: var(--home-frame-bottom) !important;
+    padding-left: var(--home-frame-left) !important;
+}
+
+.home-step-frame {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    box-sizing: border-box;
+}
+
 .capa-estatica {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
+    display: grid;
+    align-items: start;
+    justify-items: stretch;
     /* Retiramos o padding-top/left daqui porque a secao-snap já faz isso para a tela toda! */
     width: 100%;
     height: 100%;
@@ -593,18 +633,20 @@ body, html {
     width: 100%;
     height: 100vh;
     background-color: var(--cor-bg-principal);
-    display: flex;
-    align-items: center;
-    padding-top: 0 !important;
+    display: grid;
+    align-items: start;
+    justify-items: stretch;
     box-sizing: border-box;
     opacity: 1;
     transform: none;
 }
 
 .conteudo-sobre {
-    width: 80%;
+    width: var(--home-frame-readable-width);
+    height: 100%;
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
     gap: 60px;
 }
 
@@ -716,18 +758,28 @@ body, html {
     width: 100%;
     height: 100vh;
     background-color: var(--cor-bg-principal);
-    display: flex;
-    align-items: center;
+    display: grid;
+    align-items: start;
+    justify-items: stretch;
     box-sizing: border-box;
     position: relative;
 }
 
 .yayoi-container {
-    width: 80%;
+    width: 100%;
     height: 70vh; /* Dá uma boa área respirável para o gráfico */
     display: flex;
     flex-direction: column;
     gap: 30px;
+}
+
+.home .yayoi-container {
+    width: 100%;
+    height: 100%;
+}
+
+.yayoi-header:empty {
+    display: none;
 }
 
 .yayoi-header h2 {
@@ -931,9 +983,10 @@ body.is-zoom-active .conteudo-projeto img {
 
 .secao-album-home {
     background-color: var(--cor-bg-principal);
-    display: flex;
+    display: grid;
     align-items: stretch;
-    justify-content: center;
+    justify-items: stretch;
+    justify-content: stretch;
 }
 
 .album-grid-wrapper {
@@ -941,8 +994,9 @@ body.is-zoom-active .conteudo-projeto img {
     flex-direction: column;
     width: 100%;
     height: 100%;
+    min-height: 0;
+    max-height: none;
     /* Cálculo mágico: Pega a altura da tela, subtrai o topo dinâmico e o rodapé para nada vazar do ecrã */
-    max-height: calc(100vh - var(--home-img-offset, 180px) - 80px); 
     gap: 40px; 
 }
 

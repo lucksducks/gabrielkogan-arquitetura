@@ -26,7 +26,7 @@ if ( $album_q->have_posts() ) {
 ?>
 <section id="secaoAlbum" class="secao-snap secao-album-home">
     <?php if ( $album_id ) : ?>
-    <div class="album-grid-wrapper">
+    <div class="album-grid-wrapper home-step-frame">
         
         <div class="album-top-row">
             
@@ -104,6 +104,6 @@ if ( $album_q->have_posts() ) {
 
     </div>
     <?php else : ?>
-    <div class="album-container album-vazio"><p>Nenhum álbum cadastrado ainda.</p></div>
+    <div class="album-container album-vazio home-step-frame"><p>Nenhum álbum cadastrado ainda.</p></div>
     <?php endif; ?>
 </section>

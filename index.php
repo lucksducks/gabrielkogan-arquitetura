@@ -1,19 +1,9 @@
 <?php get_header(); ?>
 <?php
-$lang = ( isset( $_GET['lang'] ) && $_GET['lang'] === 'en' ) ? 'en' : 'pt';
+$lang = tiete_get_lang();
 $textos = tiete_get_dicionario($lang);
 ?>
 <main class="area-scroll" id="mainContent">
-    <div class="logo-watermark-box" id="logoEasterEgg" style="cursor: pointer;">
-        <div class="link-logo-vertical">
-            <img src="<?php echo esc_url( get_template_directory_uri() ); ?>/assets/img/logo.png" alt="Gabriel Kogan" class="img-logo-pequena">
-            <div class="bloco-texto-logo">
-                <span class="nome-principal">GABRIEL KOGAN</span>
-                <span class="subtitulo-arquitetura"><?php echo esc_html( $textos['arq_subtit'] ); ?></span>
-            </div>
-        </div>
-    </div>
-
     <div class="area-scroll-thumbs">
         <div id="prevHover">
             <?php
