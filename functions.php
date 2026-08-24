@@ -15,3 +15,9 @@ require get_template_directory() . '/inc/cpt-album.php';
 
 // 4. Integração com APIs externas (Spotify, Deezer, iTunes)
 require get_template_directory() . '/inc/api-spotify.php';
+
+// 5. Loja — Shopify (preço/estoque ao vivo) precisa vir antes do CPT que o usa
+require get_template_directory() . '/inc/shopify.php';
+
+// 6. Loja — CPT "Produto" (curso/livro/objeto), meta boxes, migração e ficha
+require get_template_directory() . '/inc/cpt-produto.php';

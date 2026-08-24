@@ -152,6 +152,8 @@ function renderizar_meta_box_bg_zoom($post) {
 
 add_action('save_post_post', function($post_id) {
     if (!isset($_POST['bg_zoom_nonce_campo']) || !wp_verify_nonce($_POST['bg_zoom_nonce_campo'], 'salvar_bg_zoom_nonce')) return;
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    if (!current_user_can('edit_post', $post_id)) return;
     if (isset($_POST['bg_zoom_image_url'])) {
         update_post_meta($post_id, 'bg_zoom_image', esc_url_raw($_POST['bg_zoom_image_url']));
     }
@@ -275,5 +277,95 @@ function tiete_salvar_pagina_traducao($post_id) {
 
     if (isset($_POST['conteudo_ja'])) {
         update_post_meta($post_id, 'conteudo_ja', wp_kses_post($_POST['conteudo_ja']));
+    }
+}
+
+// ========================================================================= //
+// 🎓 DADOS DO CURSO — PROFESSOR, DATA, PREÇO E INSCRIÇÃO
+// ========================================================================= //
+// A ementa/descrição do curso reaproveita os campos de Texto PT/EN/JP
+// da caixa "Dados Adicionais e Traducao" acima — aqui ficam só os
+// dados comerciais específicos de curso.
+add_action('add_meta_boxes', 'tiete_adicionar_meta_box_curso');
+function tiete_adicionar_meta_box_curso() {
+    add_meta_box(
+        'curso_dados_extra',
+        '🎓 Dados do Curso',
+        'tiete_renderizar_meta_box_curso',
+        'post',
+        'normal',
+        'high'
+    );
+}
+
+function tiete_renderizar_meta_box_curso($post) {
+    wp_nonce_field('salvar_curso_nonce', 'curso_nonce_campo');
+
+    $professor       = get_post_meta($post->ID, 'curso_professor', true);
+    $data_hora       = get_post_meta($post->ID, 'curso_data_hora', true);
+    $duracao         = get_post_meta($post->ID, 'curso_duracao',   true);
+    $preco           = get_post_meta($post->ID, 'curso_preco',     true);
+    $vagas           = get_post_meta($post->ID, 'curso_vagas',     true);
+    $cta_url         = get_post_meta($post->ID, 'curso_cta_url',   true);
+    $shopify_produto = get_post_meta($post->ID, 'curso_shopify_produto', true);
+    ?>
+    <p style="font-size:12px; color:#666; margin-top:0;">
+        Preencha estes campos para posts da categoria <strong>Cursos</strong> — eles ativam o layout de venda na barra lateral. A ementa continua nos campos de Texto PT/EN/JP da caixa de tradução acima.
+    </p>
+
+    <div style="background:#f0f6fc; border:1px solid #c3d9f0; border-radius:4px; padding:14px 16px; margin-bottom:18px;">
+        <label for="curso_shopify_produto" style="display:block; margin-bottom:4px;"><strong>🛒 Handle do produto no Shopify</strong></label>
+        <input type="text" id="curso_shopify_produto" name="curso_shopify_produto" value="<?php echo esc_attr($shopify_produto); ?>" placeholder="ex: kazuo-shinohara" style="width:100%; max-width:400px; padding:5px;">
+        <p style="font-size:12px; color:#555; margin:6px 0 0;">É a parte final da URL do produto na sua loja Shopify (<code>.../products/<strong>kazuo-shinohara</strong></code>). Preenchido isso, o botão "Inscrever-se" compra de verdade via Shopify — o link abaixo vira só um plano B enquanto isso não estiver configurado.</p>
+    </div>
+
+    <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:15px;">
+        <div style="flex:1; min-width:200px;">
+            <label for="curso_professor" style="display:block; margin-bottom:4px;"><strong>Professor:</strong></label>
+            <input type="text" id="curso_professor" name="curso_professor" value="<?php echo esc_attr($professor); ?>" style="width:100%; padding:5px;">
+        </div>
+        <div style="flex:0 0 220px;">
+            <label for="curso_data_hora" style="display:block; margin-bottom:4px;"><strong>Data e hora da aula ao vivo:</strong></label>
+            <input type="datetime-local" id="curso_data_hora" name="curso_data_hora" value="<?php echo esc_attr($data_hora); ?>" style="width:100%; padding:5px;">
+        </div>
+        <div style="flex:0 0 160px;">
+            <label for="curso_duracao" style="display:block; margin-bottom:4px;"><strong>Duração:</strong></label>
+            <input type="text" id="curso_duracao" name="curso_duracao" value="<?php echo esc_attr($duracao); ?>" placeholder="ex: 2h" style="width:100%; padding:5px;">
+        </div>
+    </div>
+    <div style="display:flex; gap:20px; flex-wrap:wrap;">
+        <div style="flex:0 0 160px;">
+            <label for="curso_preco" style="display:block; margin-bottom:4px;"><strong>Preço:</strong></label>
+            <input type="text" id="curso_preco" name="curso_preco" value="<?php echo esc_attr($preco); ?>" placeholder="ex: R$ 350" style="width:100%; padding:5px;">
+        </div>
+        <div style="flex:0 0 120px;">
+            <label for="curso_vagas" style="display:block; margin-bottom:4px;"><strong>Vagas:</strong></label>
+            <input type="number" id="curso_vagas" name="curso_vagas" value="<?php echo esc_attr($vagas); ?>" min="0" style="width:100%; padding:5px;">
+        </div>
+        <div style="flex:1; min-width:220px;">
+            <label for="curso_cta_url" style="display:block; margin-bottom:4px;"><strong>Link alternativo do botão "Inscrever-se"</strong> <small>(usado só se o handle do Shopify acima estiver vazio)</small>:</label>
+            <input type="text" id="curso_cta_url" name="curso_cta_url" value="<?php echo esc_attr($cta_url); ?>" placeholder="https://..." style="width:100%; padding:5px;">
+        </div>
+    </div>
+    <?php
+}
+
+add_action('save_post', 'tiete_salvar_dados_curso');
+function tiete_salvar_dados_curso($post_id) {
+    if (!isset($_POST['curso_nonce_campo']) || !wp_verify_nonce($_POST['curso_nonce_campo'], 'salvar_curso_nonce')) return;
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    if (!current_user_can('edit_post', $post_id)) return;
+
+    if (isset($_POST['curso_professor'])) update_post_meta($post_id, 'curso_professor', sanitize_text_field($_POST['curso_professor']));
+    if (isset($_POST['curso_data_hora'])) update_post_meta($post_id, 'curso_data_hora', sanitize_text_field($_POST['curso_data_hora']));
+    if (isset($_POST['curso_duracao']))   update_post_meta($post_id, 'curso_duracao',   sanitize_text_field($_POST['curso_duracao']));
+    if (isset($_POST['curso_preco']))     update_post_meta($post_id, 'curso_preco',     sanitize_text_field($_POST['curso_preco']));
+    if (isset($_POST['curso_cta_url']))   update_post_meta($post_id, 'curso_cta_url',   esc_url_raw($_POST['curso_cta_url']));
+    if (isset($_POST['curso_shopify_produto'])) update_post_meta($post_id, 'curso_shopify_produto', sanitize_title($_POST['curso_shopify_produto']));
+
+    if (isset($_POST['curso_vagas']) && $_POST['curso_vagas'] !== '') {
+        update_post_meta($post_id, 'curso_vagas', intval($_POST['curso_vagas']));
+    } else {
+        delete_post_meta($post_id, 'curso_vagas');
     }
 }

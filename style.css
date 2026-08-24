@@ -30,8 +30,8 @@ Description: Layout 2/3 + 1/3, Ficha Técnica Animada Colada (0px), Logo no Roda
     --largura-dir: 40%;
     --home-frame-top: clamp(170px, 19.75vh, 210px);
     --home-frame-right: 0px;
-    --home-frame-bottom: 40px;
-    --home-frame-left: 90px;
+    --home-frame-bottom: 130px;
+    --home-frame-left: 180px;
     --home-frame-readable-width: min(80%, 720px);
     --home-sidebar-nav-top: 70px;
 }
@@ -146,6 +146,18 @@ body, html {
     padding: 0 !important;
 }
 
+/* Galerias de projetos: cada imagem encosta na seguinte, sem linhas brancas. */
+.single .conteudo-projeto .wp-block-gallery {
+    --wp--style--gallery-gap-default: 0px !important;
+    --wp--style--unstable-gallery-gap: 0px !important;
+    gap: 0 !important;
+    margin: 0 !important;
+}
+
+.single .conteudo-projeto .wp-block-gallery .wp-block-image {
+    margin: 0 !important;
+}
+
 .area-scroll .conteudo-projeto p:not(.wp-block-image):not(:has(img)) {
     display: none;
 }
@@ -154,7 +166,7 @@ body, html {
 .barra-fixa {
     width: var(--largura-dir);
     height: 100vh;
-    padding: 100px 60px; 
+    padding: 100px 60px;
     background-color: var(--cor-bg-principal);
     box-sizing: border-box;
     display: flex;
@@ -310,14 +322,19 @@ body, html {
 .filtros-categoria li a.filtro-ativo { color: var(--cor-texto-forte); font-weight: bold; }
 
 .menu-projetos {
-    flex-grow: 1; 
+    flex-grow: 1;
     min-height: 0;
-    overflow-y: auto; 
+    overflow-y: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
 .menu-projetos::-webkit-scrollbar { display: none; }
 .menu-projetos ul { list-style: none; padding: 0; margin: 0; }
+
+/* HOME (lista curada): nunca rola. Título em tamanho fixo (2rem) e o que não
+   couber é simplesmente cortado — quanto maior a resolução, mais projetos
+   aparecem. Sem scroll, sem encolher. */
+.menu-projetos--home-fit { overflow: hidden; }
 
 .item-projeto { 
     position: relative; 
@@ -386,9 +403,9 @@ body, html {
     max-width: 400px;
     margin-top: 0 !important; 
     padding-top: 0 !important;
-    opacity: 0; 
-    flex-grow: 1; 
-    min-height: 0; 
+    opacity: 0;
+    flex-grow: 0;
+    min-height: 0;
     overflow-y: auto; 
     overscroll-behavior: contain; 
     scrollbar-width: none; 
@@ -614,7 +631,7 @@ body, html {
 .img-capa-full {
     width: 100%;
     height: 100%;
-    object-fit: cover; 
+    object-fit: contain; /* mostra o desenho inteiro na proporção, sem cortar */
     object-position: center;
 }
 
@@ -1264,3 +1281,344 @@ body.is-zoom-active .conteudo-projeto img {
     object-fit: cover;
     display: block;
 }
+
+/* ========================================================= */
+/* 22. FICHA TÉCNICA — LAYOUT DE CURSO                        */
+/* ========================================================= */
+
+.curso-meta-linha {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+}
+
+.curso-compra-box {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding-top: 18px;
+    margin-top: 40px !important;
+}
+
+.curso-compra-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.curso-preco-linha {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.curso-preco {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: var(--cor-texto-forte);
+}
+
+.curso-vagas {
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--cor-texto-mutado);
+}
+
+.btn-inscrever-se {
+    padding: 10px 24px;
+    background: transparent;
+    color: var(--cor-texto-forte);
+    border: 1px solid var(--cor-texto-forte);
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 2px;
+    transition: background 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+
+.btn-inscrever-se:hover {
+    background: var(--cor-texto-forte);
+    color: var(--cor-bg-principal);
+}
+
+.btn-inscrever-se--em-breve {
+    background: transparent;
+    color: var(--cor-texto-inativo);
+    border: 1px solid var(--cor-texto-inativo);
+    cursor: default;
+}
+
+.btn-comprar-shopify:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.curso-compra-erro {
+    flex-basis: 100%;
+    font-size: 11px;
+    color: var(--cor-texto-mutado);
+}
+
+.curso-compra-erro:empty {
+    display: none;
+}
+
+.curso-check-estudante {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--cor-texto-medio);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.curso-check-estudante input {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    border: 1px solid var(--cor-texto-inativo);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.curso-check-estudante input:hover {
+    border-color: var(--cor-texto-forte);
+}
+
+.curso-check-estudante input:checked {
+    background: var(--cor-texto-forte);
+    border-color: var(--cor-texto-forte);
+}
+
+/* ========================================================= */
+/* LOJA — FICHA DE PRODUTO (detalhe) + CARRINHO (provisório)  */
+/* Estilo funcional; o design dedicado virá numa etapa futura */
+/* ========================================================= */
+
+/* Detalhe da ficha (livro/objeto/curso) dentro da descrição lateral */
+.produto-ficha-detalhe {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 16px;
+    margin: 18px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--cor-texto-inativo);
+    font-size: 12px;
+    line-height: 1.5;
+}
+.produto-ficha-detalhe dt {
+    color: var(--cor-texto-mutado);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 10px;
+    align-self: center;
+}
+.produto-ficha-detalhe dd {
+    margin: 0;
+    color: var(--cor-texto-medio);
+    text-align: right;
+}
+
+/* Vitrine (arquivo) — capas clicáveis */
+.loja-vitrine { display: block; }
+.loja-vitrine-item { display: block; }
+.loja-vitrine-item img { width: 100% !important; height: auto !important; display: block; }
+
+/* Botão flutuante do carrinho */
+.carrinho-toggle {
+    position: fixed;
+    top: 24px;
+    left: calc(var(--largura-esq) + 60px - 6px);
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: var(--cor-texto-medio);
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    transition: color 0.2s;
+}
+.carrinho-toggle:hover {
+    color: var(--cor-texto-forte);
+}
+.carrinho-icone {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+.carrinho-contador {
+    box-sizing: border-box;
+    min-width: 16px;
+    height: 16px;
+    padding: 1px 5px 0;
+    border-radius: 8px;
+    background: var(--cor-texto-inativo);
+    color: var(--cor-bg-principal);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    line-height: 1;
+    font-family: var(--fonte-primaria);
+}
+
+/* Overlay + drawer */
+.carrinho-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 26, 26, 0.4);
+    z-index: 9500;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+}
+.carrinho-overlay.aberto { opacity: 1; visibility: visible; }
+
+.carrinho-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: min(400px, 92vw);
+    z-index: 9600;
+    background: var(--cor-bg-principal);
+    border-left: 1px solid var(--cor-texto-inativo);
+    transform: translateX(100%);
+    transition: transform 0.34s cubic-bezier(0.4, 0, 0.15, 1);
+    display: flex;
+    flex-direction: column;
+}
+.carrinho-drawer.aberto { transform: translateX(0); }
+
+.carrinho-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 26px 18px;
+    border-bottom: 1px solid var(--cor-texto-inativo);
+}
+.carrinho-topo h2 {
+    margin: 0;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: bold;
+}
+.carrinho-fechar {
+    background: none;
+    border: none;
+    font-size: 15px;
+    color: var(--cor-texto-mutado);
+    cursor: pointer;
+    font-family: var(--fonte-primaria);
+}
+.carrinho-fechar:hover { color: var(--cor-texto-forte); }
+
+.carrinho-itens { flex: 1; overflow-y: auto; padding: 4px 26px; }
+.carrinho-vazio {
+    color: var(--cor-texto-mutado);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+    padding: 40px 0;
+}
+
+.carrinho-item {
+    display: flex;
+    gap: 14px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--cor-texto-inativo);
+}
+.carrinho-item-img {
+    width: 46px;
+    height: 60px;
+    flex: none;
+    background: var(--cor-bg-escuro);
+    overflow: hidden;
+}
+.carrinho-item-img img { width: 100%; height: 100%; object-fit: cover; }
+.carrinho-item-info { flex: 1; min-width: 0; }
+.carrinho-item-nome {
+    margin: 0 0 3px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.carrinho-item-var { margin: 0 0 8px; font-size: 11px; color: var(--cor-texto-mutado); }
+.carrinho-item-preco { font-size: 12px; font-weight: bold; white-space: nowrap; }
+
+.carrinho-stepper {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--cor-texto-inativo);
+}
+.carrinho-stepper button {
+    width: 24px;
+    height: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--cor-texto-medio);
+    font-family: var(--fonte-primaria);
+}
+.carrinho-stepper button:hover { color: var(--cor-texto-forte); }
+.carrinho-stepper span { min-width: 24px; text-align: center; font-size: 12px; }
+
+.carrinho-remover {
+    display: block;
+    margin-top: 6px;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--cor-texto-inativo);
+    cursor: pointer;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: var(--fonte-primaria);
+}
+.carrinho-remover:hover { color: var(--cor-texto-forte); }
+
+.carrinho-rodape { padding: 20px 26px 26px; border-top: 1px solid var(--cor-texto-inativo); }
+.carrinho-subtotal-linha {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 5px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+.carrinho-subtotal-linha span:last-child { font-size: 16px; font-weight: bold; letter-spacing: 0; }
+.carrinho-frete-nota { margin: 0 0 14px; font-size: 10px; color: var(--cor-texto-mutado); }
+.carrinho-checkout {
+    width: 100%;
+    background: var(--cor-texto-forte);
+    color: var(--cor-bg-principal);
+    border: none;
+    cursor: pointer;
+    font-family: var(--fonte-primaria);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 15px;
+}
+.carrinho-checkout:disabled { background: var(--cor-texto-inativo); cursor: not-allowed; }

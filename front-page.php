@@ -20,14 +20,14 @@ if ($page_sobre) {
     <img src="<?php echo esc_url( get_template_directory_uri() ); ?>/assets/img/hanko.png" alt="Hanko" class="img-hanko-intro">
 </div>
 
-<nav class="snap-dots" id="scrollIndicator">
-    <button class="snap-dot snap-dot--ativo" data-index="0" aria-label="<?php echo esc_attr( $textos['capa'] ); ?>"></button>
-    <button class="snap-dot" data-index="1" aria-label="<?php echo esc_attr( $textos['pratica_tit'] ); ?>"></button>
-    <button class="snap-dot" data-index="2" aria-label="<?php echo esc_attr( $textos['yayoi'] ); ?>"></button>
-    <button class="snap-dot" data-index="3" aria-label="<?php echo esc_attr( $textos['album_semana'] ); ?>"></button>
-</nav>
-
 <main class="area-scroll" id="mainContent">
+    <nav class="snap-dots" id="scrollIndicator">
+        <button class="snap-dot snap-dot--ativo" data-index="0" aria-label="<?php echo esc_attr( $textos['capa'] ); ?>"></button>
+        <button class="snap-dot" data-index="1" aria-label="<?php echo esc_attr( $textos['pratica_tit'] ); ?>"></button>
+        <button class="snap-dot" data-index="2" aria-label="<?php echo esc_attr( $textos['yayoi'] ); ?>"></button>
+        <button class="snap-dot" data-index="3" aria-label="<?php echo esc_attr( $textos['album_semana'] ); ?>"></button>
+    </nav>
+
     <div class="area-scroll-thumbs">
         <div id="prevHover">
             <?php
