@@ -81,7 +81,7 @@ function tiete_enqueue_scripts() {
     wp_enqueue_style('google-fonts-inter', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap', array(), null);
 
     // 2. Estilo principal do tema (style.css)
-    wp_enqueue_style('tiete-style', get_stylesheet_uri(), array(), '25.3');
+    wp_enqueue_style('tiete-style', get_stylesheet_uri(), array(), '25.5');
 
     // 3. Script do Lenis (Smooth Scroll)
     wp_enqueue_script('lenis', 'https://unpkg.com/lenis@1.1.13/dist/lenis.min.js', array(), '1.1.13', true);
@@ -107,6 +107,16 @@ function tiete_enqueue_scripts() {
         ),
     ));
 }
+
+// A galeria ocupa 60% da composição, limitada a 2400px no desktop.
+// Informar essa largura ao navegador evita selecionar arquivos de 1024px para exibição maior.
+add_filter( 'wp_calculate_image_sizes', function( $sizes ) {
+    if ( is_singular( 'post' ) ) {
+        return '(max-width: 2400px) 60vw, 1440px';
+    }
+
+    return $sizes;
+} );
 
 // =========================================================================
 // DICIONÁRIO E TEXTOS DA INTERFACE

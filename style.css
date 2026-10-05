@@ -28,6 +28,8 @@ Description: Layout 2/3 + 1/3, Ficha Técnica Animada Colada (0px), Logo no Roda
     /* Layout Base */
     --largura-esq: 60%;
     --largura-dir: 40%;
+    --largura-site: min(100vw, 2400px);
+    --margem-site: max(0px, calc((100vw - var(--largura-site)) / 2));
     --home-frame-top: clamp(170px, 19.75vh, 210px);
     --home-frame-right: 0px;
     --home-frame-bottom: 130px;
@@ -77,7 +79,8 @@ body, html {
 .container-principal {
     display: flex;
     height: 100vh;
-    width: 100vw;
+    width: var(--largura-site);
+    margin-inline: auto;
     position: relative;
     background-color: var(--cor-bg-principal);
 }
@@ -188,7 +191,7 @@ body, html {
 .logo-watermark-box {
     position: fixed; 
     top: 30px; 
-    left: 40px; 
+    left: calc(var(--margem-site) + 40px);
     z-index: 50; 
     width: fit-content;
     pointer-events: auto; 
@@ -331,10 +334,8 @@ body, html {
 .menu-projetos::-webkit-scrollbar { display: none; }
 .menu-projetos ul { list-style: none; padding: 0; margin: 0; }
 
-/* HOME (lista curada): nunca rola. Título em tamanho fixo (2rem) e o que não
-   couber é simplesmente cortado — quanto maior a resolução, mais projetos
-   aparecem. Sem scroll, sem encolher. */
-.menu-projetos--home-fit { overflow: hidden; }
+/* A lista permanece acessível quando a altura da janela é reduzida. */
+.menu-projetos--home-fit { overflow-y: auto; }
 
 .item-projeto { 
     position: relative; 
@@ -447,7 +448,7 @@ body, html {
 /* ========================================================= */
 .snap-dots {
     position: fixed;
-    left: 20px;
+    left: calc(var(--margem-site) + 20px);
     top: 50%;
     transform: translateY(-50%);
     display: none;
@@ -628,11 +629,11 @@ body, html {
     position: relative;
 }
 
-.img-capa-full {
-    width: 100%;
-    height: 100%;
+.home .area-scroll .img-capa-full {
+    width: 100% !important;
+    height: 100% !important;
     object-fit: contain; /* mostra o desenho inteiro na proporção, sem cortar */
-    object-position: center;
+    object-position: center top;
 }
 
 .capa-overlay {
@@ -1441,7 +1442,7 @@ body.is-zoom-active .conteudo-projeto img {
 .carrinho-toggle {
     position: fixed;
     top: 24px;
-    left: calc(var(--largura-esq) + 60px - 6px);
+    left: calc(var(--margem-site) + var(--largura-site) * 0.6 + 54px);
     z-index: 9000;
     display: flex;
     align-items: center;
@@ -1622,3 +1623,44 @@ body.is-zoom-active .conteudo-projeto img {
     padding: 15px;
 }
 .carrinho-checkout:disabled { background: var(--cor-texto-inativo); cursor: not-allowed; }
+
+/* Escala moderada para desktop amplo, sem deixar a interface crescer sem limite. */
+@media (min-width: 1920px) {
+    html {
+        font-size: clamp(16px, calc(12px + 0.21vw), 18px);
+    }
+
+    .filtros-categoria li a,
+    .sobre-texto p,
+    .sobre-contato h3,
+    .sobre-contato p {
+        font-size: clamp(12px, calc(8px + 0.2vw), 14px);
+    }
+
+    .texto-descricao-lateral {
+        font-size: clamp(13px, calc(10px + 0.2vw), 16px);
+        max-width: 480px;
+    }
+
+    .autoria-projeto,
+    .album-review {
+        font-size: clamp(12px, calc(9px + 0.2vw), 15px);
+    }
+
+    .nome-principal,
+    .subtitulo-arquitetura,
+    .album-artista,
+    .album-tempo,
+    .album-streaming a {
+        font-size: clamp(10px, calc(7px + 0.16vw), 12px);
+    }
+}
+
+/* Janelas baixas: preservar o conteúdo da capa e a rolagem da lista. */
+@media (max-height: 700px) and (min-width: 1025px) {
+    :root {
+        --home-frame-top: clamp(80px, 17vh, 120px);
+        --home-frame-bottom: clamp(32px, 8vh, 56px);
+        --home-sidebar-nav-top: clamp(16px, 5vh, 40px);
+    }
+}
