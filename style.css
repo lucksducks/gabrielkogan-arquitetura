@@ -196,21 +196,18 @@ body, html {
     width: fit-content;
     pointer-events: auto; 
     mix-blend-mode: difference;
-    transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+    cursor: pointer;
+    transform-origin: top left;
+    transform: translate3d(0, 0, 0) scale(1);
+    transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
 }
 
 .logo-watermark-box.easter-egg-ativo {
-    top: 50%;
-    left: 30%; 
-    transform: translate(-50%, -50%); 
-}
-
-.logo-watermark-box.easter-egg-ativo .img-logo-pequena {
-    max-width: 45vw; 
+    transform: translate3d(var(--logo-easter-x, 0px), var(--logo-easter-y, 0px), 0) scale(var(--logo-easter-scale, 1));
 }
 
 .logo-watermark-box .img-logo-pequena {
-    filter: invert(1); 
     max-width: 13vh;
 }
 
@@ -221,6 +218,10 @@ body, html {
 
 .logo-watermark-box .bloco-texto-logo {
     display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .logo-watermark-box { transition-duration: 0.01ms; }
 }
 
 .link-logo-vertical {
@@ -354,7 +355,8 @@ body, html {
     font-weight: bold;
     transform: translateY(0);
 }
-.item-projeto:hover a { color: var(--cor-texto-hover); }
+.item-projeto:hover a,
+.item-projeto.projeto-em-foco a { color: var(--cor-texto-hover); }
 .item-projeto.projeto-ativo a { color: var(--cor-texto-forte); font-weight: bold; }
 
 /* ========================================================= */
@@ -770,7 +772,7 @@ body, html {
 }
 
 /* ========================================================= */
-/* 13. SEÇÃO YAYOI (GRÁFICO DE QUADRANTES)                   */
+/* 13. SEÇÃO YAYOI — mapa de pontos                           */
 /* ========================================================= */
 .secao-yayoi-home {
     width: 100%;
@@ -785,59 +787,29 @@ body, html {
 
 .yayoi-container {
     width: 100%;
-    height: 70vh; /* Dá uma boa área respirável para o gráfico */
+    height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 30px;
 }
 
-.home .yayoi-container {
-    width: 100%;
-    height: 100%;
-}
-
-.yayoi-header:empty {
-    display: none;
-}
-
-.yayoi-header h2 {
-    font-size: 2rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    color: var(--cor-texto-forte);
-    margin: 0;
-    line-height: 1;
-}
-
-.yayoi-header p {
-    font-size: 10px;
-    color: var(--cor-texto-mutado);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-top: 5px;
-}
-
-/* O Quadro do Gráfico */
 .yayoi-grafico-area {
-    flex-grow: 1;
     position: relative;
-    border: 1px solid rgba(0,0,0,0.05); /* Margem super suave */
+    width: min(100%, 960px);
+    height: min(100%, 660px);
+    flex: none;
+    --yayoi-margem-x: clamp(42px, 5vw, 64px);
+    --yayoi-margem-y: clamp(42px, 5vh, 56px);
 }
 
-/* Linhas dos Eixos (Cruz central) */
 .yayoi-eixo-x {
     position: absolute;
     top: 50%;
     left: 0;
     width: 100%;
-    height: 1px;
-    background-color: rgba(0,0,0,0.1);
     transform: translateY(-50%);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 10px;
-    box-sizing: border-box;
     pointer-events: none;
 }
 
@@ -845,79 +817,51 @@ body, html {
     position: absolute;
     top: 0;
     left: 50%;
-    width: 1px;
     height: 100%;
-    background-color: rgba(0,0,0,0.1);
     transform: translateX(-50%);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
-    box-sizing: border-box;
     pointer-events: none;
 }
 
 .yayoi-eixo-x span, .yayoi-eixo-y span {
-    font-size: 9px;
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--cor-texto-inativo);
-    background: var(--cor-bg-principal); /* Mascara a linha por trás da palavra */
-    padding: 2px 6px;
+    letter-spacing: 2px;
+    color: var(--cor-texto-mutado);
 }
 
 .yayoi-pontos-wrapper {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: var(--yayoi-margem-y) var(--yayoi-margem-x);
+    background-image: radial-gradient(circle, rgba(26, 26, 26, 0.18) 1px, transparent 1.3px);
+    background-size: 30px 30px;
+    background-position: center;
 }
 
-/* O Ponto de cada Projeto */
 .yayoi-ponto {
     position: absolute;
-    width: 8px;
-    height: 8px;
+    width: 12px;
+    height: 12px;
     background-color: var(--cor-texto-forte);
     border-radius: 50%;
-    /* Translada o centro exato da bolinha para a coordenada matemática */
-    transform: translate(-50%, 50%); 
+    transform: translate(-50%, 50%);
     cursor: pointer;
-    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), background-color 0.3s ease;
+    transition: transform 0.25s ease;
     z-index: 10;
 }
 
-.yayoi-ponto:hover {
-    transform: translate(-50%, 50%) scale(2);
-    background-color: #ff3333; /* Fica vermelho forte ao passar o rato (Vibe Yayoi) */
+.yayoi-ponto:hover,
+.yayoi-ponto:focus-visible {
+    transform: translate(-50%, 50%) scale(1.5);
     z-index: 20;
 }
 
-/* Nome do Projeto a surgir no Hover */
-.yayoi-tooltip {
-    position: absolute;
-    bottom: 18px; /* Fica um pouco acima da bolinha */
-    left: 50%;
-    transform: translateX(-50%);
-    white-space: nowrap;
-    background: var(--cor-texto-forte);
-    color: var(--cor-bg-principal);
-    font-size: 10px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    padding: 4px 8px;
-    border-radius: 2px;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.2s ease, visibility 0.2s ease;
-    pointer-events: none;
-}
-
-.yayoi-ponto:hover .yayoi-tooltip {
-    opacity: 1;
-    visibility: visible;
+.yayoi-ponto:focus-visible {
+    outline: 1px solid var(--cor-texto-forte);
+    outline-offset: 6px;
 }
 
 /* =========================================================================

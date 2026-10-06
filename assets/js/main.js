@@ -95,15 +95,42 @@ document.addEventListener('DOMContentLoaded', () => {
         resizeTimer = setTimeout(sincronizarOffsetImagem, 100);
     });
 
+    // A marca mantém seu tamanho original no layout; só a transformação é animada.
+    function posicionarLogoEasterEgg() {
+        const logo = document.getElementById('logoEasterEgg');
+        const site = document.querySelector('.container-principal');
+        if (!logo || !site) return;
+
+        const siteRect = site.getBoundingClientRect();
+        const estilo = getComputedStyle(logo);
+        const largura = logo.offsetWidth;
+        const altura = logo.offsetHeight;
+        if (!largura || !altura) return;
+
+        // Centro da coluna esquerda, com folga acima e abaixo em janelas baixas.
+        const escala = Math.min(siteRect.width * 0.42 / largura, window.innerHeight * 0.72 / altura);
+        const centroX = siteRect.left + siteRect.width * 0.3;
+        const centroY = window.innerHeight / 2;
+        const deslocamentoX = centroX - largura * escala / 2 - parseFloat(estilo.left);
+        const deslocamentoY = centroY - altura * escala / 2 - parseFloat(estilo.top);
+
+        logo.style.setProperty('--logo-easter-x', `${deslocamentoX}px`);
+        logo.style.setProperty('--logo-easter-y', `${deslocamentoY}px`);
+        logo.style.setProperty('--logo-easter-scale', escala);
+    }
+
+    window.addEventListener('resize', posicionarLogoEasterEgg);
+
+    document.getElementById('logoEasterEgg')?.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        e.currentTarget.click();
+    });
+
     function limparTimers() {
         timersNavegacao.forEach(clearTimeout);
         timersNavegacao = [];
-
-        if (movePreviewRef) {
-            window.removeEventListener('mousemove', movePreviewRef);
-            movePreviewRef = null;
-        }
-
+        ocultarPreviewProjeto();
         document.querySelectorAll('.clone-titulo-animacao').forEach(el => el.remove());
     }
 
@@ -314,43 +341,93 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     // HOVER PREVIEW
     // =========================================================================
-    
-    document.addEventListener('mouseover', (e) => {
-        const item = e.target.closest('.item-projeto');
-        if (!item || item.classList.contains('projeto-ativo')) return;
-
-        const thumbsOverlay = document.querySelector('.area-scroll-thumbs');
-        const prevHoverBox  = document.getElementById('prevHover');
-        const targetThumb   = thumbsOverlay?.querySelector(`[data-projeto-id="${item.dataset.projetoId}"]`);
-
-        if (targetThumb && prevHoverBox) {
-            document.querySelectorAll('.prev-hover-img').forEach(t => t.classList.remove('thumb-ativo'));
-            targetThumb.classList.add('thumb-ativo');
-            thumbsOverlay.classList.add('ativo');
-
-            if (!movePreviewRef) {
-                movePreviewRef = (ev) => {
-                    const boxWidth = prevHoverBox.offsetWidth;
-                    prevHoverBox.style.transform = `translate3d(${ev.clientX - (boxWidth / 2) - 180}px, ${ev.clientY + 20}px, 0)`;
-                };
-                window.addEventListener('mousemove', movePreviewRef);
-                movePreviewRef(e);
-            }
-        }
-    });
-
-    document.addEventListener('mouseout', (e) => {
-        const item = e.target.closest('.item-projeto');
-        if (!item) return;
-
-        const thumbsOverlay = document.querySelector('.area-scroll-thumbs');
-        if (thumbsOverlay) thumbsOverlay.classList.remove('ativo');
-        document.querySelectorAll('.prev-hover-img').forEach(t => t.classList.remove('thumb-ativo'));
+    function ocultarPreviewProjeto() {
+        document.querySelector('.area-scroll-thumbs')?.classList.remove('ativo');
+        document.querySelectorAll('.prev-hover-img.thumb-ativo').forEach(thumb => thumb.classList.remove('thumb-ativo'));
+        document.querySelectorAll('.item-projeto.projeto-em-foco').forEach(item => item.classList.remove('projeto-em-foco'));
 
         if (movePreviewRef) {
             window.removeEventListener('mousemove', movePreviewRef);
             movePreviewRef = null;
         }
+    }
+
+    function mostrarPreviewProjeto(projetoId) {
+        const thumbsOverlay = document.querySelector('.area-scroll-thumbs');
+        const prevHoverBox = document.getElementById('prevHover');
+        const targetThumb = thumbsOverlay?.querySelector(`[data-projeto-id="${projetoId}"]`);
+        if (!targetThumb || !prevHoverBox) return null;
+
+        document.querySelectorAll('.prev-hover-img.thumb-ativo').forEach(thumb => thumb.classList.remove('thumb-ativo'));
+        targetThumb.classList.add('thumb-ativo');
+        thumbsOverlay.classList.add('ativo');
+        return prevHoverBox;
+    }
+
+    function posicionarPreviewNoGrafico(ponto, box) {
+        const grafico = ponto.closest('.yayoi-grafico-area');
+        if (!grafico) return;
+
+        const limite = grafico.getBoundingClientRect();
+        const origem = ponto.getBoundingClientRect();
+        const largura = box.offsetWidth;
+        const altura = box.offsetHeight;
+        const margem = 8;
+        let x = origem.right + 24;
+        let y = origem.top - altura - 20;
+
+        if (x + largura > limite.right - margem) x = origem.left - largura - 24;
+        if (y < limite.top + margem) y = origem.bottom + 20;
+
+        x = Math.max(limite.left + margem, Math.min(x, limite.right - largura - margem));
+        y = Math.max(limite.top + margem, Math.min(y, limite.bottom - altura - margem));
+        box.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    }
+
+    function ativarPontoGrafico(ponto) {
+        ocultarPreviewProjeto();
+        const projetoId = ponto.dataset.projetoId;
+        const item = document.querySelector(`.item-projeto[data-projeto-id="${projetoId}"]`);
+        item?.classList.add('projeto-em-foco');
+
+        const box = mostrarPreviewProjeto(projetoId);
+        if (box) posicionarPreviewNoGrafico(ponto, box);
+    }
+
+    document.addEventListener('mouseover', (e) => {
+        const ponto = e.target.closest('.yayoi-ponto');
+        if (ponto) {
+            ativarPontoGrafico(ponto);
+            return;
+        }
+
+        const item = e.target.closest('.item-projeto');
+        if (!item || item.classList.contains('projeto-ativo')) return;
+
+        ocultarPreviewProjeto();
+        const box = mostrarPreviewProjeto(item.dataset.projetoId);
+        if (!box) return;
+
+        movePreviewRef = (ev) => {
+            const largura = box.offsetWidth;
+            box.style.transform = `translate3d(${ev.clientX - (largura / 2) - 180}px, ${ev.clientY + 20}px, 0)`;
+        };
+        window.addEventListener('mousemove', movePreviewRef);
+        movePreviewRef(e);
+    });
+
+    document.addEventListener('mouseout', (e) => {
+        const alvo = e.target.closest('.item-projeto, .yayoi-ponto');
+        if (alvo && !alvo.contains(e.relatedTarget)) ocultarPreviewProjeto();
+    });
+
+    document.addEventListener('focusin', (e) => {
+        const ponto = e.target.closest('.yayoi-ponto');
+        if (ponto) ativarPontoGrafico(ponto);
+    });
+
+    document.addEventListener('focusout', (e) => {
+        if (e.target.closest('.yayoi-ponto')) ocultarPreviewProjeto();
     });
 
     // =========================================================================
@@ -858,7 +935,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (e) => {
 
         const easterEgg = e.target.closest('#logoEasterEgg');
-        if (easterEgg) { easterEgg.classList.toggle('easter-egg-ativo'); return; }
+        if (easterEgg) {
+            posicionarLogoEasterEgg();
+            const ativo = easterEgg.classList.toggle('easter-egg-ativo');
+            easterEgg.setAttribute('aria-pressed', String(ativo));
+            return;
+        }
 
         const dot = e.target.closest('.snap-dot');
         if (dot) { snapParaSecaoIndexHome(parseInt(dot.dataset.index, 10)); return; }

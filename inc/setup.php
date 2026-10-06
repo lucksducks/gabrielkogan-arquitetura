@@ -81,13 +81,13 @@ function tiete_enqueue_scripts() {
     wp_enqueue_style('google-fonts-inter', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap', array(), null);
 
     // 2. Estilo principal do tema (style.css)
-    wp_enqueue_style('tiete-style', get_stylesheet_uri(), array(), '25.5');
+    wp_enqueue_style('tiete-style', get_stylesheet_uri(), array(), '25.8');
 
     // 3. Script do Lenis (Smooth Scroll)
     wp_enqueue_script('lenis', 'https://unpkg.com/lenis@1.1.13/dist/lenis.min.js', array(), '1.1.13', true);
 
     // 4. Nosso script principal (main.js) - Atualizado para pasta assets/
-    wp_enqueue_script('tiete-main', get_template_directory_uri() . '/assets/js/main.js', array('lenis'), '25.3', true);
+    wp_enqueue_script('tiete-main', get_template_directory_uri() . '/assets/js/main.js', array('lenis'), '25.7', true);
 
     // 5. Segurança: Passando variáveis do PHP para o JS de forma limpa e sanitizada
     wp_localize_script('tiete-main', 'temaConfig', array(
@@ -138,7 +138,7 @@ function tiete_get_dicionario($lang = 'pt') {
             'vermelho'    => 'Vermelho',
             'branco'      => 'Branco',
             'universal'   => 'Universal',
-            'privado'     => 'Privado',
+            'privado'     => 'Único',
             'professor'   => 'Professor',
             'inscrever_se'=> 'Inscrever-se',
             'vagas_label' => 'vagas',
@@ -173,7 +173,7 @@ function tiete_get_dicionario($lang = 'pt') {
             'vermelho'    => 'Red',
             'branco'      => 'White',
             'universal'   => 'Universal',
-            'privado'     => 'Private',
+            'privado'     => 'Unique',
             'professor'   => 'Instructor',
             'inscrever_se'=> 'Enroll now',
             'vagas_label' => 'seats',

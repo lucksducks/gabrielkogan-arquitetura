@@ -107,9 +107,7 @@ if ($page_sobre) {
                                    class="yayoi-ponto" 
                                    style="left: <?php echo esc_attr($x); ?>%; bottom: <?php echo esc_attr($y); ?>%;"
                                    data-projeto-id="<?php echo get_the_ID(); ?>"
-                                   aria-label="<?php echo esc_attr($titulo); ?>">
-                                    <span class="yayoi-tooltip"><?php echo esc_html($titulo); ?></span>
-                                </a>
+                                   aria-label="<?php echo esc_attr($titulo); ?>"></a>
                             <?php
                             endif;
                         endwhile;

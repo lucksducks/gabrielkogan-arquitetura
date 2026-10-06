@@ -17,9 +17,9 @@
 $lang = tiete_get_lang();
 $textos = tiete_get_dicionario($lang);
 ?>
-<div class="logo-watermark-box" id="logoEasterEgg" style="cursor: pointer;">
+<div class="logo-watermark-box" id="logoEasterEgg" role="button" tabindex="0" aria-pressed="false">
     <div class="link-logo-vertical">
-        <img src="<?php echo esc_url( get_template_directory_uri() ); ?>/assets/img/logo.png" alt="Gabriel Kogan" class="img-logo-pequena">
+        <img src="<?php echo esc_url( get_template_directory_uri() ); ?>/assets/img/logo.svg" alt="Gabriel Kogan" class="img-logo-pequena">
         <div class="bloco-texto-logo">
             <span class="nome-principal">GABRIEL KOGAN</span>
             <span class="subtitulo-arquitetura"><?php echo esc_html( $textos['arq_subtit'] ); ?></span>
