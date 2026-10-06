@@ -102,13 +102,13 @@ function tiete_enqueue_scripts() {
     wp_enqueue_style('google-fonts-inter', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap', array(), null);
 
     // 2. Estilo principal do tema (style.css)
-    wp_enqueue_style('tiete-style', get_stylesheet_uri(), array(), '26.7');
+    wp_enqueue_style('tiete-style', get_stylesheet_uri(), array(), '26.14');
 
     // 3. Script do Lenis (Smooth Scroll)
     wp_enqueue_script('lenis', 'https://unpkg.com/lenis@1.1.13/dist/lenis.min.js', array(), '1.1.13', true);
 
     // 4. Nosso script principal (main.js) - Atualizado para pasta assets/
-    wp_enqueue_script('tiete-main', get_template_directory_uri() . '/assets/js/main.js', array('lenis'), '26.6', true);
+    wp_enqueue_script('tiete-main', get_template_directory_uri() . '/assets/js/main.js', array('lenis'), '26.10', true);
 
     // 5. Segurança: Passando variáveis do PHP para o JS de forma limpa e sanitizada
     wp_localize_script('tiete-main', 'temaConfig', array(
@@ -152,6 +152,7 @@ function tiete_get_dicionario($lang = 'pt') {
             'sobre_hover' => 'SOBRE',
             'capa'        => 'Capa',
             'pratica_tit' => 'NOSSA PRÁTICA',
+            'equipe_tit'  => 'NOSSA EQUIPE',
             'contato'     => 'CONTATO',
             'arq_subtit'  => 'ARQUITETURA',
             'yayoi'       => 'Yayoi',
@@ -197,6 +198,7 @@ function tiete_get_dicionario($lang = 'pt') {
             'sobre_hover' => 'ABOUT',
             'capa'        => 'Cover',
             'pratica_tit' => 'OUR PRACTICE',
+            'equipe_tit'  => 'OUR TEAM',
             'contato'     => 'CONTACT',
             'arq_subtit'  => 'ARCHITECTURE',
             'yayoi'       => 'Yayoi',
@@ -242,6 +244,7 @@ function tiete_get_dicionario($lang = 'pt') {
             'sobre_hover' => '概要',
             'capa'        => 'カバー',
             'pratica_tit' => '私たちの実践',
+            'equipe_tit'  => 'チーム',
             'contato'     => '連絡先',
             'arq_subtit'  => '建築',
             'yayoi'       => '弥生',

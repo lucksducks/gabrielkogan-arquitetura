@@ -98,6 +98,18 @@ if ($page_sobre) {
 
                 <div class="sobre-texto-scroll" data-lenis-prevent>
                     <?php echo $texto_sobre_final; ?>
+
+                    <section class="sobre-equipe" aria-labelledby="titulo-sobre-equipe">
+                        <h3 id="titulo-sobre-equipe"><?php echo esc_html( $textos['equipe_tit'] ); ?></h3>
+                        <div class="sobre-equipe-grid">
+                            <?php foreach ( array( 'Gabriel Kogan', 'Chay Cardozo', 'Lucas Bordin' ) as $nome_equipe ) : ?>
+                                <article class="sobre-equipe-pessoa">
+                                    <div class="sobre-equipe-retrato" aria-hidden="true"></div>
+                                    <h4><?php echo esc_html( $nome_equipe ); ?></h4>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    </section>
                 </div>
 
             </div>

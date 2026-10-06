@@ -705,21 +705,22 @@ body, html {
 }
 
 .sobre-texto h2 {
-    font-size: 2rem;
+    font-size: clamp(2rem, 2.5vw, 2.6rem);
     font-weight: bold;
     text-transform: uppercase;
     color: var(--cor-texto-forte);
-    margin: 0 0 30px 0;
-    line-height: 1;
+    margin: 0 0 clamp(24px, 3vh, 36px) 0;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
 }
 
 .sobre-texto p {
-    font-size: 11px;
-    line-height: 1.6;
+    font-size: clamp(14px, 0.95vw, 16px);
+    line-height: 1.7;
     color: var(--cor-texto-medio);
     margin-top: 0;
-    margin-bottom: 15px !important;
-    max-width: 90%;
+    margin-bottom: 1.5rem !important;
+    max-width: 64ch;
 }
 
 .sobre-contato h3 {
@@ -745,19 +746,18 @@ body, html {
    ======================================================= */
 
 .sobre-texto-scroll {
-    max-height: 40vh; /* Altura da janela de texto */
-    overflow-y: auto; 
-    margin-top: 1rem;
-    padding-right: 5px; /* Respiro mínimo */
+    max-height: min(48vh, 430px);
+    overflow-y: auto;
+    margin-top: 0;
+    padding: 0 12px 12px 0;
 
     /* 1. ESCONDER A BARRA DE ROLAGEM COMPLETAMENTE */
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE e Edge */
 
-    /* 2. INDICADOR VISUAL: EFEITO FADE NO FINAL DO TEXTO */
-    /* Faz o texto ir ficando transparente nos últimos 20% da caixa */
-    -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+    /* Um fade curto sugere que o texto continua abaixo sem apagar o parágrafo. */
+    -webkit-mask-image: linear-gradient(to bottom, black 0, black calc(100% - 24px), transparent 100%);
+    mask-image: linear-gradient(to bottom, black 0, black calc(100% - 24px), transparent 100%);
 }
 
 /* Esconder barra no Chrome, Safari e Opera */
@@ -767,13 +767,56 @@ body, html {
 
 /* Espaçamento entre os parágrafos gerados pelo WP */
 .sobre-texto-scroll p {
-    margin-bottom: 1.2rem;
+    margin-bottom: 1.5rem;
 }
 
 /* Adicionamos uma margem extra no último parágrafo para que, 
    ao chegar no final, o texto ultrapasse a zona do fade e fique 100% visível */
 .sobre-texto-scroll p:last-child {
-    margin-bottom: 3rem; 
+    margin-bottom: 2rem;
+}
+
+.sobre-equipe {
+    max-width: 64ch;
+    margin-top: clamp(2rem, 5vh, 3.25rem);
+    padding-bottom: 1.5rem;
+}
+
+.sobre-equipe h3 {
+    margin: 0 0 1.25rem;
+    color: var(--cor-texto-forte);
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.12em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.sobre-equipe-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px 14px;
+}
+
+.sobre-equipe-pessoa {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
+}
+
+.sobre-equipe-retrato {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    background: #deddd9;
+}
+
+.sobre-equipe-pessoa h4 {
+    margin: 0.7rem 0 0;
+    color: var(--cor-texto-forte);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.25;
 }
 
 /* ========================================================= */
@@ -1635,6 +1678,8 @@ body.is-zoom-active .conteudo-projeto img {
 .mobile-menu { display: none; }
 
 @media (max-width: 1024px) {
+    :root { --mobile-image-gap: 0px; }
+
     html, body {
         height: auto;
         min-height: 100%;
@@ -1671,7 +1716,7 @@ body.is-zoom-active .conteudo-projeto img {
 
     .logo-watermark-box {
         position: fixed;
-        top: max(18px, env(safe-area-inset-top));
+        top: calc(18px + env(safe-area-inset-top));
         left: 18px;
         z-index: 910;
     }
@@ -1696,6 +1741,8 @@ body.is-zoom-active .conteudo-projeto img {
         line-height: 0;
         text-decoration: none;
     }
+
+    .home-mobile-project + .home-mobile-project { margin-top: var(--mobile-image-gap); }
 
     .home .area-scroll .home-mobile-project img {
         display: block !important;
@@ -1736,6 +1783,15 @@ body.is-zoom-active .conteudo-projeto img {
         mask-image: none;
     }
 
+    .sobre-equipe { margin-top: 3rem; }
+
+    .sobre-equipe-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px 16px;
+    }
+
+    .sobre-equipe-pessoa h4 { font-size: 15px; }
+
     .sobre-texto p,
     .sobre-contato p {
         max-width: 100%;
@@ -1748,6 +1804,10 @@ body.is-zoom-active .conteudo-projeto img {
     /* As imagens do projeto seguem a rolagem natural; a ficha vem depois. */
     .single .wrap-projetos,
     .single .conteudo-projeto { width: 100% !important; }
+
+    .single .conteudo-projeto > * + * { margin-top: var(--mobile-image-gap) !important; }
+
+    .single .conteudo-projeto .wp-block-gallery { row-gap: var(--mobile-image-gap) !important; }
 
     .single .conteudo-projeto img { cursor: default; }
 
@@ -1850,7 +1910,6 @@ body.is-zoom-active .conteudo-projeto img {
         display: flex;
         flex-direction: column;
         width: min(88vw, 430px);
-        height: 100dvh;
         visibility: hidden;
         background: var(--cor-bg-principal);
         transform: translateX(100%);
@@ -1868,7 +1927,7 @@ body.is-zoom-active .conteudo-projeto img {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
-        padding: max(24px, env(safe-area-inset-top)) 22px 8px;
+        padding: calc(24px + env(safe-area-inset-top)) max(22px, env(safe-area-inset-right)) 8px 22px;
     }
 
     .mobile-menu-brand {
@@ -1979,7 +2038,7 @@ body.is-zoom-active .conteudo-projeto img {
 
     .mobile-menu-footer {
         flex: none;
-        padding: 10px 22px max(16px, env(safe-area-inset-bottom));
+        padding: 10px max(22px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 22px;
         background: var(--cor-bg-principal);
     }
 

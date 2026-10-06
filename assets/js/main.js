@@ -15,9 +15,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const fundoMenuMobile = document.getElementById('mobileMenuBackdrop');
     const barraLateral = document.querySelector('.barra-fixa');
     const logoEasterEgg = document.getElementById('logoEasterEgg');
+    const metaCorTemaOriginal = document.querySelector('meta[name="theme-color"]');
+    const corTemaOriginal = metaCorTemaOriginal?.content;
+    let metaCorTemaMenu = metaCorTemaOriginal;
 
     function definirMenuMobile(aberto) {
         if (!menuMobile || !botaoMenuMobile) return;
+        if (aberto) {
+            if (!metaCorTemaMenu) {
+                metaCorTemaMenu = document.createElement('meta');
+                metaCorTemaMenu.name = 'theme-color';
+                document.head.appendChild(metaCorTemaMenu);
+            }
+            metaCorTemaMenu.content = getComputedStyle(document.documentElement).getPropertyValue('--cor-bg-principal').trim();
+        } else if (metaCorTemaOriginal) {
+            metaCorTemaOriginal.content = corTemaOriginal;
+        } else {
+            metaCorTemaMenu?.remove();
+            metaCorTemaMenu = null;
+        }
         document.body.classList.toggle('mobile-menu-open', aberto);
         menuMobile.inert = !aberto;
         botaoMenuMobile.setAttribute('aria-expanded', String(aberto));
@@ -163,6 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let permitirsSumico       = false;
     let isCarregando          = false;
+    let navegacaoPendente     = null;
     let fichaTecnicaCache     = document.body.classList.contains('single') ? lateral.innerHTML : null;
     let filtroAtivoGlobal     = temaConfig.filtroAtivo;
     let projetoAtivoUrlGlobal = document.body.classList.contains('single') ? window.location.href : null;
@@ -551,8 +568,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     // NAVEGAÇÃO AJAX
     // =========================================================================
+    function liberarNavegacao() {
+        isCarregando = false;
+        const pendente = navegacaoPendente;
+        navegacaoPendente = null;
+        if (!pendente) return;
+
+        if (pendente.tipo === 'filtro') {
+            toggleLateral(pendente.url, pendente.slug);
+        } else {
+            carregarPagina(pendente.url, pendente.atualizarHistorico, pendente.apenasLateral);
+        }
+    }
+
+    function urlSemFiltro(url) {
+        const destino = new URL(url, window.location.href);
+        destino.searchParams.delete('categoria');
+        destino.hash = '';
+        return destino.href;
+    }
+
     async function carregarPagina(url, atualizarHistorico = true, apenasLateral = false, elementoClicado = null) {
-        if (isCarregando) return;
+        if (isCarregando) {
+            navegacaoPendente = { tipo: 'pagina', url, atualizarHistorico, apenasLateral };
+            return;
+        }
 
         if (ehMobile()) definirMenuMobile(false);
         limparTimers();
@@ -770,44 +810,64 @@ document.addEventListener('DOMContentLoaded', () => {
             const navTopoAtual = document.querySelector('.navegacao-topo');
             if (navTopoNova && navTopoAtual) navTopoAtual.innerHTML = navTopoNova.innerHTML;
 
-            if (atualizarHistorico) window.history.pushState({}, '', url);
+            const voltarPendente = navegacaoPendente?.tipo === 'pagina' && !navegacaoPendente.atualizarHistorico;
+            if (atualizarHistorico && !voltarPendente) window.history.pushState({}, '', url);
 
             if (!isIndoParaLista) {
-                projetoAtivoUrlGlobal = url;
-                filtroAtivoGlobal     = null;
-                atualizarNegritoFiltros(null);
-                fichaTecnicaCache     = lateral.innerHTML;
+                const projetoAberto = document.body.classList.contains('single');
+                projetoAtivoUrlGlobal = projetoAberto ? url : null;
+                filtroAtivoGlobal     = projetoAberto ? null : new URL(url, window.location.href).searchParams.get('categoria');
+                atualizarNegritoFiltros(filtroAtivoGlobal);
+                fichaTecnicaCache     = projetoAberto ? doc.querySelector('.container-dinamico-lateral').innerHTML : null;
                 resetarInteracoes();
             } else {
+                filtroAtivoGlobal = new URL(url, window.location.href).searchParams.get('categoria');
+                atualizarNegritoFiltros(filtroAtivoGlobal);
                 marcarProjetoAtivoNaLista();
             }
 
         } catch (error) {
             window.location.href = url;
         } finally {
-            if (ehMobile()) isCarregando = false;
-            else timersNavegacao.push(setTimeout(() => { isCarregando = false; }, 900));
+            if (ehMobile()) liberarNavegacao();
+            else timersNavegacao.push(setTimeout(liberarNavegacao, 900));
         }
     }
 
     async function toggleLateral(url, slugClicado) {
-        if (isCarregando) return;
+        if (isCarregando) {
+            navegacaoPendente = { tipo: 'filtro', url, slug: slugClicado };
+            return;
+        }
 
-        if (filtroAtivoGlobal === slugClicado && fichaTecnicaCache) {
+        if (filtroAtivoGlobal === slugClicado) {
+            if (!document.body.classList.contains('single') || !fichaTecnicaCache) {
+                carregarPagina(urlSemFiltro(url), true, true);
+                return;
+            }
+
             limparTimers();
+            isCarregando = true;
             lateral.style.opacity = '0';
             timersNavegacao.push(setTimeout(() => {
                 lateral.innerHTML     = fichaTecnicaCache;
                 lateral.style.opacity = '1';
+                const descricao = lateral.querySelector('.texto-descricao-lateral');
+                const autoria   = lateral.querySelector('.autoria-projeto');
+                if (descricao) descricao.style.opacity = '1';
+                if (autoria) autoria.style.opacity = '1';
                 filtroAtivoGlobal     = null;
                 atualizarNegritoFiltros(null);
+                projetoAtivoUrlGlobal = urlSemFiltro(projetoAtivoUrlGlobal);
+                const voltarPendente = navegacaoPendente?.tipo === 'pagina' && !navegacaoPendente.atualizarHistorico;
+                if (!voltarPendente) window.history.pushState({}, '', projetoAtivoUrlGlobal);
                 marcarProjetoAtivoNaLista();
                 initLenisLateral();
+                liberarNavegacao();
             }, 200));
             return;
         }
 
-        filtroAtivoGlobal = slugClicado;
         carregarPagina(url, true, true);
     }
 
@@ -815,9 +875,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!projetoAtivoUrlGlobal) return;
         let urlObj;
         try { urlObj = new URL(projetoAtivoUrlGlobal); } catch (e) { return; }
-        const urlPura = urlObj.origin + urlObj.pathname + urlObj.search;
+        const urlPura = urlSemFiltro(urlObj.href);
         document.querySelectorAll('.item-projeto a').forEach(a => {
-            a.parentElement.classList.toggle('projeto-ativo', (a.origin + a.pathname + a.search) === urlPura);
+            a.parentElement.classList.toggle('projeto-ativo', urlSemFiltro(a.href) === urlPura);
         });
     }
 
