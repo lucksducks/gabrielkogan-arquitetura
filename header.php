@@ -26,3 +26,4 @@ $textos = tiete_get_dicionario($lang);
         </div>
     </div>
 </div>
+<?php get_template_part( 'template-parts/mobile', 'menu' ); ?>

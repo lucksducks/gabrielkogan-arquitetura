@@ -28,6 +28,43 @@ if ($page_sobre) {
         <button class="snap-dot" data-index="3" aria-label="<?php echo esc_attr( $textos['album_semana'] ); ?>"></button>
     </nav>
 
+    <?php
+    $categoria_mobile = isset( $_GET['categoria'] ) ? sanitize_key( wp_unslash( $_GET['categoria'] ) ) : '';
+    $ids_mobile = tiete_get_projetos_home_mobile_curados();
+    $args_mobile = array(
+        'post_type' => 'post',
+        'posts_per_page' => $categoria_mobile ? -1 : 5,
+        'no_found_rows' => true,
+        'ignore_sticky_posts' => true,
+    );
+    if ( $categoria_mobile ) {
+        $args_mobile['category_name'] = $categoria_mobile;
+        $args_mobile['orderby'] = 'title';
+        $args_mobile['order'] = 'ASC';
+    } elseif ( $ids_mobile ) {
+        $args_mobile['post__in'] = $ids_mobile;
+        $args_mobile['orderby'] = 'post__in';
+    } else {
+        $args_mobile['orderby'] = 'title';
+        $args_mobile['order'] = 'ASC';
+    }
+    $projetos_mobile = new WP_Query( $args_mobile );
+    ?>
+    <section class="home-mobile-projects" aria-label="<?php echo esc_attr( $textos['projetos'] ); ?>">
+        <?php while ( $projetos_mobile->have_posts() ) : $projetos_mobile->the_post();
+            if ( ! has_post_thumbnail() ) continue;
+            $titulo_mobile = $lang !== 'pt' ? get_post_meta( get_the_ID(), 'titulo_' . $lang, true ) : '';
+            $titulo_mobile = $titulo_mobile ?: get_the_title();
+            $url_mobile = get_permalink();
+            if ( $categoria_mobile ) $url_mobile = add_query_arg( 'categoria', $categoria_mobile, $url_mobile );
+            $url_mobile = tiete_url_com_lang( $url_mobile, $lang );
+            ?>
+            <a class="home-mobile-project" href="<?php echo esc_url( $url_mobile ); ?>" aria-label="<?php echo esc_attr( $titulo_mobile ); ?>">
+                <?php echo get_the_post_thumbnail( get_the_ID(), 'full', array( 'alt' => '', 'loading' => 'lazy', 'decoding' => 'async', 'sizes' => '(max-width: 1024px) 100vw, 1px' ) ); ?>
+            </a>
+        <?php endwhile; wp_reset_postdata(); ?>
+    </section>
+
     <div class="area-scroll-thumbs">
         <div id="prevHover">
             <?php
@@ -48,7 +85,7 @@ if ($page_sobre) {
 
     <section id="secaoCapa" class="secao-snap capa-estatica">
         <div class="capa-imagem-wrapper home-step-frame">
-            <img src="<?php echo esc_url( get_template_directory_uri() ); ?>/assets/img/home.png" alt="Gabriel Kogan Arquitetura" class="img-capa-full">
+            <img src="<?php echo esc_url( get_template_directory_uri() ); ?>/assets/img/home.png" alt="Gabriel Kogan Arquitetura" class="img-capa-full" loading="lazy">
         </div>
     </section>
 

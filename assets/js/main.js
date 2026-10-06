@@ -6,6 +6,110 @@ document.addEventListener('DOMContentLoaded', () => {
     const area      = document.getElementById('mainContent');
     const lateral   = document.querySelector('.container-dinamico-lateral');
     const barraZoom = document.getElementById('barraZoom');
+    const mobileLayout = window.matchMedia('(max-width: 1024px)');
+    const ehMobile = () => mobileLayout.matches;
+
+    const menuMobile = document.getElementById('mobileMenu');
+    const botaoMenuMobile = document.getElementById('mobileMenuToggle');
+    const botaoFecharMenu = document.getElementById('mobileMenuClose');
+    const fundoMenuMobile = document.getElementById('mobileMenuBackdrop');
+    const barraLateral = document.querySelector('.barra-fixa');
+    const logoEasterEgg = document.getElementById('logoEasterEgg');
+
+    function definirMenuMobile(aberto) {
+        if (!menuMobile || !botaoMenuMobile) return;
+        document.body.classList.toggle('mobile-menu-open', aberto);
+        menuMobile.inert = !aberto;
+        botaoMenuMobile.setAttribute('aria-expanded', String(aberto));
+        area.inert = aberto;
+        if (barraLateral) barraLateral.inert = aberto;
+        if (logoEasterEgg) logoEasterEgg.inert = aberto;
+        botaoMenuMobile.inert = aberto;
+        if (aberto) {
+            botaoFecharMenu?.focus();
+        } else if (menuMobile.contains(document.activeElement)) {
+            botaoMenuMobile.focus();
+        }
+    }
+
+    function atualizarIndiceMenuMobile() {
+        if (!menuMobile) return;
+        const categoria = menuMobile.dataset.category || '';
+        const expandido = menuMobile.dataset.expanded === 'true';
+        const mostrarIndice = !!categoria || expandido;
+        const destaques = menuMobile.querySelector('.mobile-menu-featured');
+        const indice = menuMobile.querySelector('.mobile-menu-all');
+        const botaoIndice = menuMobile.querySelector('.mobile-menu-show-all');
+        const vazio = menuMobile.querySelector('.mobile-menu-empty');
+
+        menuMobile.querySelectorAll('[data-mobile-category]').forEach(botao => {
+            botao.setAttribute('aria-pressed', String(botao.dataset.mobileCategory === categoria));
+        });
+        if (destaques) destaques.hidden = mostrarIndice;
+        if (indice) indice.hidden = !mostrarIndice;
+        if (botaoIndice) {
+            botaoIndice.hidden = !!categoria;
+            botaoIndice.setAttribute('aria-expanded', String(expandido));
+            botaoIndice.textContent = expandido ? botaoIndice.dataset.labelFeatured : botaoIndice.dataset.labelAll;
+        }
+
+        let visiveis = 0;
+        indice?.querySelectorAll('.mobile-menu-project-link').forEach(link => {
+            const categorias = (link.dataset.mobileCategories || '').split(' ');
+            link.hidden = !!categoria && !categorias.includes(categoria);
+            if (!link.hidden) visiveis++;
+        });
+        if (vazio) vazio.hidden = !categoria || visiveis > 0;
+    }
+
+    atualizarIndiceMenuMobile();
+
+    botaoMenuMobile?.addEventListener('click', () => definirMenuMobile(true));
+    botaoFecharMenu?.addEventListener('click', () => definirMenuMobile(false));
+    fundoMenuMobile?.addEventListener('click', () => definirMenuMobile(false));
+    menuMobile?.addEventListener('click', (e) => {
+        const filtro = e.target.closest('[data-mobile-category]');
+        if (filtro) {
+            menuMobile.dataset.category = filtro.dataset.mobileCategory;
+            menuMobile.dataset.expanded = 'false';
+            atualizarIndiceMenuMobile();
+            menuMobile.querySelector('.mobile-menu-content').scrollTop = 0;
+            return;
+        }
+        if (e.target.closest('.mobile-menu-show-all')) {
+            menuMobile.dataset.expanded = String(menuMobile.dataset.expanded !== 'true');
+            atualizarIndiceMenuMobile();
+            menuMobile.querySelector('.mobile-menu-content').scrollTop = 0;
+            return;
+        }
+        if (e.target.closest('a')) definirMenuMobile(false);
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.body.classList.contains('mobile-menu-open')) definirMenuMobile(false);
+    });
+
+    // Deslizar a partir da borda direita abre o menu; o gesto inverso o fecha.
+    let inicioGestoMenu = null;
+    document.addEventListener('touchstart', (e) => {
+        if (!ehMobile() || e.touches.length !== 1) return;
+        const toque = e.touches[0];
+        const aberto = document.body.classList.contains('mobile-menu-open');
+        if (!aberto && toque.clientX < window.innerWidth - 96) return;
+        inicioGestoMenu = { x: toque.clientX, y: toque.clientY, id: toque.identifier, aberto };
+    }, { passive: true });
+    document.addEventListener('touchend', (e) => {
+        if (!inicioGestoMenu || !ehMobile() || e.touches.length) return;
+        const toque = Array.from(e.changedTouches).find(t => t.identifier === inicioGestoMenu.id);
+        if (!toque) { inicioGestoMenu = null; return; }
+        const dx = toque.clientX - inicioGestoMenu.x;
+        const dy = toque.clientY - inicioGestoMenu.y;
+        if (Math.abs(dx) >= 64 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            if (!inicioGestoMenu.aberto && dx < 0) definirMenuMobile(true);
+            if (inicioGestoMenu.aberto && dx > 0) definirMenuMobile(false);
+        }
+        inicioGestoMenu = null;
+    }, { passive: true });
+    document.addEventListener('touchcancel', () => { inicioGestoMenu = null; }, { passive: true });
 
     // ⭐ Garantir que a imagem bg-zoom dinâmica está configurada
     const bgZoomUrl = barraZoom?.dataset.bgZoomUrl;
@@ -82,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ALINHAMENTO DINÂMICO — topo da imagem home = topo da lista de projetos
     // =========================================================================
     function sincronizarOffsetImagem() {
-        if (!document.body.classList.contains('home')) return;
+        if (!document.body.classList.contains('home') || ehMobile()) return;
         const lista = document.getElementById('listaProjetos');
         if (!lista) return;
         const offset = lista.getBoundingClientRect().top;
@@ -95,31 +199,44 @@ document.addEventListener('DOMContentLoaded', () => {
         resizeTimer = setTimeout(sincronizarOffsetImagem, 100);
     });
 
-    // A marca mantém seu tamanho original no layout; só a transformação é animada.
+    // Animar o tamanho real do SVG evita ampliar uma camada rasterizada.
     function posicionarLogoEasterEgg() {
         const logo = document.getElementById('logoEasterEgg');
         const site = document.querySelector('.container-principal');
         if (!logo || !site) return;
 
         const siteRect = site.getBoundingClientRect();
-        const estilo = getComputedStyle(logo);
-        const largura = logo.offsetWidth;
-        const altura = logo.offsetHeight;
+        const imagem = logo.querySelector('.img-logo-pequena');
+        const largura = ehMobile() ? 66 : window.innerHeight * 0.13;
+        const altura = largura * (imagem?.naturalHeight && imagem?.naturalWidth ? imagem.naturalHeight / imagem.naturalWidth : 8116 / 8461);
         if (!largura || !altura) return;
 
         // Centro da coluna esquerda, com folga acima e abaixo em janelas baixas.
-        const escala = Math.min(siteRect.width * 0.42 / largura, window.innerHeight * 0.72 / altura);
-        const centroX = siteRect.left + siteRect.width * 0.3;
+        const escala = Math.min(siteRect.width * (ehMobile() ? 0.72 : 0.42) / largura, window.innerHeight * 0.72 / altura);
+        const centroX = siteRect.left + siteRect.width * (ehMobile() ? 0.5 : 0.3);
         const centroY = window.innerHeight / 2;
-        const deslocamentoX = centroX - largura * escala / 2 - parseFloat(estilo.left);
-        const deslocamentoY = centroY - altura * escala / 2 - parseFloat(estilo.top);
-
-        logo.style.setProperty('--logo-easter-x', `${deslocamentoX}px`);
-        logo.style.setProperty('--logo-easter-y', `${deslocamentoY}px`);
-        logo.style.setProperty('--logo-easter-scale', escala);
+        logo.style.setProperty('--logo-easter-left', `${centroX - largura * escala / 2}px`);
+        logo.style.setProperty('--logo-easter-top', `${centroY - altura * escala / 2}px`);
+        logo.style.setProperty('--logo-easter-width', `${largura * escala}px`);
     }
 
     window.addEventListener('resize', posicionarLogoEasterEgg);
+
+    let logoAbertaNaEntradaMobile = false;
+    if (ehMobile() && window.scrollY < 48 && !window.location.hash && logoEasterEgg) {
+        logoEasterEgg.classList.add('logo-inicial-mobile');
+        posicionarLogoEasterEgg();
+        logoEasterEgg.classList.add('easter-egg-ativo');
+        logoEasterEgg.setAttribute('aria-pressed', 'true');
+        logoAbertaNaEntradaMobile = true;
+        requestAnimationFrame(() => logoEasterEgg.classList.remove('logo-inicial-mobile'));
+    }
+    window.addEventListener('scroll', () => {
+        if (!logoAbertaNaEntradaMobile || window.scrollY < 48) return;
+        logoAbertaNaEntradaMobile = false;
+        logoEasterEgg.classList.remove('easter-egg-ativo');
+        logoEasterEgg.setAttribute('aria-pressed', 'false');
+    }, { passive: true });
 
     document.getElementById('logoEasterEgg')?.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -304,11 +421,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     // LENIS — SMOOTH SCROLL
     // =========================================================================
-    const lenis = new Lenis({
-        wrapper:         area,
+    let lenis = new Lenis({
+        wrapper:         ehMobile() ? window : area,
         lerp:            0.06,
         wheelMultiplier: 1.2,
-        smoothWheel:     true,
+        smoothWheel:     !ehMobile(),
     });
 
     let lenisLateralInstance = null;
@@ -318,6 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lenisLateralInstance.destroy();
             lenisLateralInstance = null;
         }
+        if (ehMobile()) return;
         const wrapper = document.querySelector('.texto-descricao-lateral');
         const content = document.querySelector('.texto-descricao-interno');
         if (wrapper && content) {
@@ -436,6 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function carregarPagina(url, atualizarHistorico = true, apenasLateral = false, elementoClicado = null) {
         if (isCarregando) return;
 
+        if (ehMobile()) definirMenuMobile(false);
         limparTimers();
         snapSairDoZoom(); 
         isCarregando = true;
@@ -488,8 +607,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const doc      = parser.parseFromString(html, 'text/html');
 
             if (!isIndoParaLista) {
+                if (ehMobile()) {
+                    logoAbertaNaEntradaMobile = false;
+                    logoEasterEgg?.classList.remove('easter-egg-ativo');
+                    logoEasterEgg?.setAttribute('aria-pressed', 'false');
+                }
+                const menuReabertoDuranteCarga = document.body.classList.contains('mobile-menu-open');
                 area.innerHTML          = doc.querySelector('#mainContent').innerHTML;
                 document.body.className = doc.body.className;
+                if (menuReabertoDuranteCarga) document.body.classList.add('mobile-menu-open');
+                document.title          = doc.title;
                 lenis.resize();
 
                 if (document.body.classList.contains('home')) {
@@ -519,11 +646,21 @@ document.addEventListener('DOMContentLoaded', () => {
             lateral.innerHTML = doc.querySelector('.container-dinamico-lateral').innerHTML;
             initLenisLateral();
 
+            const novoConteudoMenu = doc.querySelector('#mobileMenu .mobile-menu-content');
+            const conteudoMenu = menuMobile?.querySelector('.mobile-menu-content');
+            if (novoConteudoMenu && conteudoMenu) {
+                conteudoMenu.innerHTML = novoConteudoMenu.innerHTML;
+                atualizarIndiceMenuMobile();
+            }
+            const novoRodapeMenu = doc.querySelector('#mobileMenu .mobile-menu-footer');
+            const rodapeMenu = menuMobile?.querySelector('.mobile-menu-footer');
+            if (novoRodapeMenu && rodapeMenu) rodapeMenu.innerHTML = novoRodapeMenu.innerHTML;
+
             const tituloDestaque  = lateral.querySelector('.titulo-projeto-destaque');
             const autoriaDestaque = lateral.querySelector('.autoria-projeto');
             const descricao       = lateral.querySelector('.texto-descricao-lateral');
 
-            if (!isIndoParaLista) {
+            if (!isIndoParaLista && !ehMobile()) {
                 let tituloVoou = false;
 
                 if (tituloDestaque && rectItemClicado) {
@@ -648,9 +785,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             window.location.href = url;
         } finally {
-            timersNavegacao.push(setTimeout(() => {
-                isCarregando = false;
-            }, 900));
+            if (ehMobile()) isCarregando = false;
+            else timersNavegacao.push(setTimeout(() => { isCarregando = false; }, 900));
         }
     }
 
@@ -937,8 +1073,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const easterEgg = e.target.closest('#logoEasterEgg');
         if (easterEgg) {
             posicionarLogoEasterEgg();
+            logoAbertaNaEntradaMobile = false;
             const ativo = easterEgg.classList.toggle('easter-egg-ativo');
             easterEgg.setAttribute('aria-pressed', String(ativo));
+            return;
+        }
+
+        if (ehMobile()) {
+            const link = e.target.closest('a');
+            if (!link || link.target === '_blank' || link.origin !== window.location.origin) return;
+            if (link.closest('.mobile-menu-project-link, .home-mobile-project, .mobile-menu-home')) {
+                if (isCarregando) return;
+                e.preventDefault();
+                carregarPagina(link.href, true, false, link);
+            }
             return;
         }
 
@@ -1000,6 +1148,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function snapParaSecaoIndexHome(index) {
+        if (ehMobile()) return;
         if (homeSnapCooldown) return;
         const sections = getSnapSections();
         if (index < 0 || index >= sections.length) return;
@@ -1021,7 +1170,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     area.addEventListener('wheel', (e) => {
-        if (!document.body.classList.contains('home') || zoomAtivo) return;
+        if (ehMobile() || !document.body.classList.contains('home') || zoomAtivo) return;
 
         // 🟢 ZONA LIVRE DE SCROLL: Verifica se o scroll está dentro da nossa caixa de texto
         const scrollBox = e.target.closest('.sobre-texto-scroll');
@@ -1050,14 +1199,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let isTouchInScrollBox = false; // Flag para rastrear o dedo no celular
 
     area.addEventListener('touchstart', (e) => {
-        if (!document.body.classList.contains('home') || zoomAtivo) return;
+        if (ehMobile() || !document.body.classList.contains('home') || zoomAtivo) return;
         touchStartY = e.touches[0].clientY;
         
         isTouchInScrollBox = !!e.target.closest('.sobre-texto-scroll');
     }, { passive: true });
 
     area.addEventListener('touchmove', (e) => {
-        if (!document.body.classList.contains('home') || zoomAtivo) return;
+        if (ehMobile() || !document.body.classList.contains('home') || zoomAtivo) return;
         
         if (isTouchInScrollBox) return;
 
@@ -1065,7 +1214,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { passive: false });
 
     area.addEventListener('touchend', (e) => {
-        if (!document.body.classList.contains('home') || zoomAtivo) return;
+        if (ehMobile() || !document.body.classList.contains('home') || zoomAtivo) return;
         
         if (isTouchInScrollBox) return;
 
@@ -1079,7 +1228,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
 
     function inicializarAlbum() {
-        if (!document.getElementById('secaoAlbum')) return;
+        if (ehMobile() || !document.getElementById('secaoAlbum')) return;
         inicializarPlayerAudio();
         inicializarCarrosselArquivo(); // Substituiu o antigo inicializarArquivo()
     }
@@ -1244,6 +1393,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetarInteracoes() {
         snapSairDoZoom();
 
+        if (ehMobile()) {
+            marcarProjetoAtivoNaLista();
+            if (window.location.hash) {
+                const destino = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
+                requestAnimationFrame(() => destino?.scrollIntoView());
+            } else {
+                window.scrollTo(0, 0);
+            }
+            permitirsSumico = true;
+            return;
+        }
+
         if (document.body.classList.contains('home')) {
             homeSnapIndex    = 0;
             homeSnapCooldown = false;
@@ -1285,12 +1446,28 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     lenis.on('scroll', onScroll);
 
+    mobileLayout.addEventListener('change', () => {
+        definirMenuMobile(false);
+        lenis.destroy();
+        lenis = new Lenis({
+            wrapper: ehMobile() ? window : area,
+            lerp: 0.06,
+            wheelMultiplier: 1.2,
+            smoothWheel: !ehMobile(),
+        });
+        lenis.on('scroll', onScroll);
+        initLenisLateral();
+        lenis.resize();
+        posicionarLogoEasterEgg();
+    });
+
     // =========================================================================
     // LOAD INICIAL E SPLASH SCREEN
     // =========================================================================
     window.addEventListener('load', () => {
         sincronizarOffsetImagem();
         inicializarAlbum();
+        if (ehMobile()) document.getElementById('introOverlay')?.remove();
         const isSingle = document.body.classList.contains('single');
 
         if (isSingle) {

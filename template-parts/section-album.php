@@ -33,7 +33,7 @@ if ( $album_q->have_posts() ) {
             <div class="album-col-capa">
                 <div class="album-capa-disco" id="albumDisc">
                     <?php if ( $album_cover ) : ?>
-                        <img src="<?php echo esc_url( $album_cover ); ?>" crossorigin="anonymous" alt="<?php echo esc_attr( $album_titulo ); ?>">
+                        <img src="<?php echo esc_url( $album_cover ); ?>" crossorigin="anonymous" alt="<?php echo esc_attr( $album_titulo ); ?>" loading="lazy">
                     <?php endif; ?>
                 </div>
             </div>
@@ -91,7 +91,7 @@ if ( $album_q->have_posts() ) {
                     if($arquivos): foreach($arquivos as $arq): ?>
                         <div class="album-card-mini" data-id="<?php echo esc_attr($arq['id']); ?>" title="<?php echo esc_attr($arq['titulo'] . ' - ' . $arq['artista']); ?>">
                             <?php if($arq['thumb_url']): ?>
-                                <img src="<?php echo esc_url($arq['thumb_url']); ?>" alt="Capa">
+                                <img src="<?php echo esc_url($arq['thumb_url']); ?>" alt="Capa" loading="lazy">
                             <?php else: ?>
                                 <div style="width:100%; height:100%; background:#e0e0e0;"></div>
                             <?php endif; ?>

@@ -10,6 +10,7 @@ add_action( 'after_setup_theme', function() {
     // a sidebar cai no fallback (todos os projetos, ordem alfabética).
     register_nav_menus( array(
         'projetos_home' => 'Projetos da Home (barra lateral)',
+        'projetos_home_mobile' => 'Projetos da Home (celular, 5 capas)',
     ) );
 });
 
@@ -19,12 +20,17 @@ add_action( 'after_setup_theme', function() {
  * (a sidebar então usa o fallback: todos os projetos em ordem alfabética).
  */
 function tiete_get_projetos_home_curados() {
+    return tiete_get_projetos_menu_curados( 'projetos_home' );
+}
+
+/** IDs dos projetos de um menu de curadoria, preservando a ordem do painel. */
+function tiete_get_projetos_menu_curados( $localizacao ) {
     $locations = get_nav_menu_locations();
-    if ( empty( $locations['projetos_home'] ) ) {
+    if ( empty( $locations[ $localizacao ] ) ) {
         return array();
     }
 
-    $itens = wp_get_nav_menu_items( $locations['projetos_home'] ); // já vem ordenado
+    $itens = wp_get_nav_menu_items( $locations[ $localizacao ] ); // já vem ordenado
     if ( ! $itens ) {
         return array();
     }
@@ -36,6 +42,21 @@ function tiete_get_projetos_home_curados() {
         }
     }
     return $ids;
+}
+
+function tiete_get_projetos_home_mobile_curados() {
+    $ids = array_merge(
+        tiete_get_projetos_menu_curados( 'projetos_home_mobile' ),
+        tiete_get_projetos_home_curados(),
+        get_posts( array( 'post_type' => 'post', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC', 'fields' => 'ids' ) )
+    );
+    $selecionados = array();
+    foreach ( array_unique( $ids ) as $id ) {
+        if ( get_post_status( $id ) !== 'publish' || ! has_post_thumbnail( $id ) ) continue;
+        $selecionados[] = $id;
+        if ( count( $selecionados ) === 5 ) break;
+    }
+    return $selecionados;
 }
 
 function tiete_get_idiomas() {
@@ -81,13 +102,13 @@ function tiete_enqueue_scripts() {
     wp_enqueue_style('google-fonts-inter', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap', array(), null);
 
     // 2. Estilo principal do tema (style.css)
-    wp_enqueue_style('tiete-style', get_stylesheet_uri(), array(), '25.8');
+    wp_enqueue_style('tiete-style', get_stylesheet_uri(), array(), '26.7');
 
     // 3. Script do Lenis (Smooth Scroll)
     wp_enqueue_script('lenis', 'https://unpkg.com/lenis@1.1.13/dist/lenis.min.js', array(), '1.1.13', true);
 
     // 4. Nosso script principal (main.js) - Atualizado para pasta assets/
-    wp_enqueue_script('tiete-main', get_template_directory_uri() . '/assets/js/main.js', array('lenis'), '25.7', true);
+    wp_enqueue_script('tiete-main', get_template_directory_uri() . '/assets/js/main.js', array('lenis'), '26.6', true);
 
     // 5. Segurança: Passando variáveis do PHP para o JS de forma limpa e sanitizada
     wp_localize_script('tiete-main', 'temaConfig', array(
@@ -112,7 +133,7 @@ function tiete_enqueue_scripts() {
 // Informar essa largura ao navegador evita selecionar arquivos de 1024px para exibição maior.
 add_filter( 'wp_calculate_image_sizes', function( $sizes ) {
     if ( is_singular( 'post' ) ) {
-        return '(max-width: 2400px) 60vw, 1440px';
+        return '(max-width: 1024px) 100vw, (max-width: 2400px) 60vw, 1440px';
     }
 
     return $sizes;
@@ -153,6 +174,16 @@ function tiete_get_dicionario($lang = 'pt') {
             'finalizar'    => 'Finalizar compra',
             'cart_vazio'   => 'Seu carrinho está vazio.',
             'cart_remover' => 'Remover',
+            'menu_abrir' => 'Abrir menu',
+            'menu_fechar' => 'Fechar menu',
+            'menu_titulo' => 'Menu',
+            'categorias' => 'Categorias',
+            'projetos' => 'Projetos',
+            'idiomas' => 'Idiomas',
+            'todos' => 'Todos',
+            'ver_todos' => 'Todos os projetos',
+            'ver_selecao' => 'Ver seleção',
+            'sem_projetos' => 'Nenhum projeto nesta categoria.',
             'filtros'     => [
                 'arquitetura' => 'Arquitetura',
                 'design'      => 'Design',
@@ -188,6 +219,16 @@ function tiete_get_dicionario($lang = 'pt') {
             'finalizar'    => 'Checkout',
             'cart_vazio'   => 'Your cart is empty.',
             'cart_remover' => 'Remove',
+            'menu_abrir' => 'Open menu',
+            'menu_fechar' => 'Close menu',
+            'menu_titulo' => 'Menu',
+            'categorias' => 'Categories',
+            'projetos' => 'Projects',
+            'idiomas' => 'Languages',
+            'todos' => 'All',
+            'ver_todos' => 'All projects',
+            'ver_selecao' => 'View selection',
+            'sem_projetos' => 'No projects in this category.',
             'filtros'     => [
                 'arquitetura' => 'Architecture',
                 'design'      => 'Design',
@@ -223,6 +264,16 @@ function tiete_get_dicionario($lang = 'pt') {
             'finalizar'    => '購入手続きへ',
             'cart_vazio'   => 'カートは空です。',
             'cart_remover' => '削除',
+            'menu_abrir' => 'メニューを開く',
+            'menu_fechar' => 'メニューを閉じる',
+            'menu_titulo' => 'メニュー',
+            'categorias' => 'カテゴリー',
+            'projetos' => 'プロジェクト',
+            'idiomas' => '言語',
+            'todos' => 'すべて',
+            'ver_todos' => 'すべてのプロジェクト',
+            'ver_selecao' => '選定作品を見る',
+            'sem_projetos' => 'このカテゴリーのプロジェクトはありません。',
             'filtros'     => [
                 'arquitetura' => '建築',
                 'design'      => 'デザイン',
